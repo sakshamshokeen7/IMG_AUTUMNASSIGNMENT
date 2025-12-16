@@ -23,4 +23,5 @@ urlpatterns = [
     path('accounts/',include('accounts.urls')),
     path('events/',include('events.urls')),
     path("", lambda request: HttpResponse("Backend is running!")),
+    path('photos/',include('photos.urls')),
 ]
