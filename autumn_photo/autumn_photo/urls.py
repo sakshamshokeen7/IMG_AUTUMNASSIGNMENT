@@ -25,4 +25,5 @@ urlpatterns = [
     path("", lambda request: HttpResponse("Backend is running!")),
     path('photos/',include('photos.urls')),
     path('dashboard/',include('dashboard.urls')),
+    path('adminpanel/',include('adminpanel.urls')),
 ]

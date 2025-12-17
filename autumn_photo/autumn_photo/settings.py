@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'events',
     'photos',
     'dashboard',
+    'adminpanel',
 ]
 
 MIDDLEWARE = [
