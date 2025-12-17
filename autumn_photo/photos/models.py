@@ -7,7 +7,7 @@ class Photo(models.Model):
         on_delete=models.CASCADE,
         related_name='photos'
     )
-    uplaoder=models.ForeignKey(
+    uploader=models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
