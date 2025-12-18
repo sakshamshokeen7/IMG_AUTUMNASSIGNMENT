@@ -3,34 +3,42 @@ from django.contrib.auth import authenticate
 from django.utils.crypto import get_random_string
 from .models import User, EmailOtp as EmailOTP
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "full_name"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ["email", "password", "first_name", "last_name"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
-            full_name=validated_data.get("full_name", ""),
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
             is_verified=False
         )
-
         otp = get_random_string(6, "0123456789")
         EmailOTP.objects.create(user=user, otp=otp)
-        print("OTP:", otp)
+        print("OTP For Testing:", otp)
         return user
-
 
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
 
     def validate(self, data):
-        user = User.objects.get(email=data["email"])
-        otp_obj = EmailOTP.objects.filter(user=user, otp=data["otp"], is_used=False).first()
+        try:
+            user = User.objects.get(email=data["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User not found")
+
+        otp_obj = EmailOTP.objects.filter(
+            user=user,
+            otp=data["otp"],
+            is_used=False
+        ).first()
 
         if not otp_obj:
             raise serializers.ValidationError("Invalid OTP")
@@ -51,8 +59,8 @@ class VerifyOTPSerializer(serializers.Serializer):
 
         user.is_verified = True
         user.save()
-        return user
 
+        return user
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -62,9 +70,13 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=data["email"], password=data["password"])
 
         if not user:
-            raise serializers.ValidationError("Invalid credentials")
+            raise serializers.ValidationError("Invalid email or password")
 
         if not user.is_verified:
-            raise serializers.ValidationError("Account not verified")
+            raise serializers.ValidationError("Please verify your account first")
 
-        return {"message": "Login success", "email": user.email, "role": user.role}
+        return {
+            "user": user,
+            "email": user.email,
+            "role": user.role,
+        }
