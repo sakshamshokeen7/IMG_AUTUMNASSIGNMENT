@@ -26,4 +26,5 @@ urlpatterns = [
     path('photos/',include('photos.urls')),
     path('dashboard/',include('dashboard.urls')),
     path('adminpanel/',include('adminpanel.urls')),
+    path('notifications/', include('notifications.urls')),
 ]

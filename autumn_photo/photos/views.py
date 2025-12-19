@@ -1,18 +1,24 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
 
 from .models import Photo, photo_like, photo_favourite, PersonTag, PhotoComment
+from events.models import Event
+from notifications.tasks import create_notification
+
 from .serializers import (
-    AddCommentSerializer,
-    PhotoDetailSerializer,
     PhotoSerializer,
-    PersonTagSerializer,
+    PhotoDetailSerializer,
     PhotoCommentSerializer,
+    AddCommentSerializer,
     EventPhotoSerializer,
+    PersonTagSerializer,
+    MultiplePhotoUploadSerializer,
 )
+
+from .utils import generate_thumbnail, generate_display, extract_exif
 
 class PhotoUploadAPIView(generics.CreateAPIView):
     queryset = Photo.objects.all()
@@ -69,11 +75,23 @@ class ToggleLikeAPIView(APIView):
         if not photo:
             return Response({"error": "Photo not found"}, status=404)
 
-        like, created = photo_like.objects.get_or_create(photo=photo, user=request.user)
+        like, created = photo_like.objects.get_or_create(
+            photo=photo,
+            user=request.user
+        )
 
         if not created:
             like.delete()
             return Response({"liked": False})
+
+        if photo.uploader and photo.uploader != request.user:
+            create_notification.delay({
+                "recipient": photo.uploader,
+                "actor": request.user,
+                "notification_type": "like",
+                "message": f"{request.user.email} liked your photo",
+                "photo": photo
+            })
 
         return Response({"liked": True})
 
@@ -85,29 +103,41 @@ class ToggleFavouriteAPIView(APIView):
         if not photo:
             return Response({"error": "Photo not found"}, status=404)
 
-        fav, created = photo_favourite.objects.get_or_create(photo=photo, user=request.user)
+        fav, created = photo_favourite.objects.get_or_create(
+            photo=photo,
+            user=request.user
+        )
 
         if not created:
             fav.delete()
             return Response({"favourited": False})
 
         return Response({"favourited": True})
-    
+
 class TagPersonAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, photo_id):
-        tagged_user = request.data.get("tagged_user")
-        face_box = request.data.get("face_box", {})
+        serializer = PersonTagSerializer(data=request.data)
 
-        tag = PersonTag.objects.create(
-            photo_id=photo_id,
-            tagged_user_id=tagged_user,
-            created_by=request.user,
-            face_box=face_box,
-        )
+        if serializer.is_valid():
+            tag = serializer.save(
+                photo_id=photo_id,
+                created_by=request.user
+            )
 
-        return Response({"tag_id": tag.id, "message": "User tagged"})
+            if tag.tagged_user != request.user:
+                create_notification.delay({
+                    "recipient": tag.tagged_user,
+                    "actor": request.user,
+                    "notification_type": "tag",
+                    "message": f"{request.user.email} tagged you in a photo",
+                    "photo_id": photo_id
+                })
+
+            return Response({"message": "User tagged"})
+
+        return Response(serializer.errors, status=400)
 
 class CommentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -116,11 +146,22 @@ class CommentCreateAPIView(APIView):
         serializer = AddCommentSerializer(data=request.data)
 
         if serializer.is_valid():
-            PhotoComment.objects.create(
+            comment = PhotoComment.objects.create(
                 user=request.user,
                 photo_id=photo_id,
                 text=serializer.validated_data["text"],
             )
+
+            photo = comment.photo
+            if photo.uploader and photo.uploader != request.user:
+                create_notification.delay({
+                    "recipient": photo.uploader,
+                    "actor": request.user,
+                    "notification_type": "comment",
+                    "message": f"{request.user.email} commented on your photo",
+                    "photo": photo
+                })
+
             return Response({"message": "Comment added"})
 
         return Response(serializer.errors, status=400)
@@ -129,12 +170,9 @@ class CommentListAPIView(generics.ListAPIView):
     serializer_class = PhotoCommentSerializer
 
     def get_queryset(self):
-        return PhotoComment.objects.filter(photo_id=self.kwargs["photo_id"]).order_by("-created_at")
-    
-from .serializers import MultiplePhotoUploadSerializer
-from .utils import generate_thumbnail, generate_display, extract_exif
-from events.models import Event
-
+        return PhotoComment.objects.filter(
+            photo_id=self.kwargs["photo_id"]
+        ).order_by("-created_at")
 
 class MultiplePhotoUploadAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -157,7 +195,7 @@ class MultiplePhotoUploadAPIView(APIView):
 
         for file in files:
             thumb = generate_thumbnail(file)
-            display_img = generate_display(file)
+            display = generate_display(file)
 
             photo = Photo.objects.create(
                 event=event,
@@ -165,17 +203,16 @@ class MultiplePhotoUploadAPIView(APIView):
                 exif_metadata=extract_exif(file),
             )
 
-            photo.original_file.save(file.name, file, save=True)
-            photo.thumbnail_file.save(f"thumb_{file.name}", thumb, save=True)
-            photo.display_file.save(f"display_{file.name}", display_img, save=True)
+            photo.original_file.save(file.name, file)
+            photo.thumbnail_file.save(f"thumb_{file.name}", thumb)
+            photo.display_file.save(f"display_{file.name}", display)
 
             uploaded.append({
                 "photo_id": photo.id,
-                "thumbnail_url": photo.thumbnail_file.url
+                "thumbnail": photo.thumbnail_file.url
             })
 
         return Response({
             "uploaded_count": len(uploaded),
-            "uploaded_photos": uploaded
+            "photos": uploaded
         })
-
