@@ -41,12 +41,19 @@ class EventPhotoSerializer(serializers.ModelSerializer):
     comments_count = serializers.IntegerField(read_only=True)
     favourites_count = serializers.IntegerField(read_only=True)
     uploader_name = serializers.CharField(source="uploader.username", read_only=True)
+    thumbnail_file = serializers.SerializerMethodField()
+
+    def get_thumbnail_file(self, obj):
+        request = self.context.get("request")
+        if obj.thumbnail_file:
+            return request.build_absolute_uri(obj.thumbnail_file.url)
+        return None
 
     class Meta:
         model = Photo
         fields = [
             "id",
-            "thumbnail_img",
+            "thumbnail_file",
             "uploader_name",
             "likes_count",
             "comments_count",
@@ -65,8 +72,8 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
         model = Photo
         fields = [
             "id",
-            "original_img",
-            "thumbnail_img",
+            "original_file",
+            "thumbnail_file",
             "uploader_name",
             "likes_count",
             "comments_count",

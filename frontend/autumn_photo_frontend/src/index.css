@@ -1,3 +1,6 @@
+@import "tailwindcss";
+
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -66,3 +69,17 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.input {
+  @apply w-full py-3 rounded-xl border border-gray-200 bg-white 
+  text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 
+  focus:ring-indigo-500 transition-all duration-200;
+}
+
+.btn-primary {
+  @apply w-full flex items-center justify-center gap-2 py-3.5 rounded-xl 
+  bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold 
+  hover:from-indigo-700 hover:to-indigo-600 transition-all shadow-lg 
+  disabled:opacity-50 disabled:cursor-not-allowed;
+}
+

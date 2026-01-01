@@ -46,8 +46,12 @@ class EventPhotoListAPIView(APIView):
         else:
             photos = photos.order_by("-created_at")
 
-        serializer = EventPhotoSerializer(photos, many=True)
-        return Response(serializer.data)
+        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
+        return Response({
+    "event": Event.name,
+    "total_photos": photos.count(),
+    "photos": serializer.data
+})
 
 class PhotoDetailAPIView(APIView):
     def get(self, request, photo_id):

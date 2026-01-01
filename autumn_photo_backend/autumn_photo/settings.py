@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'adminpanel',
     'notifications',
     'channels',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -55,9 +56,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
-
+CORS_ORIGIN_ALLOW_ALL = True
 ROOT_URLCONF = 'autumn_photo.urls'
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 TEMPLATES = [
     {
@@ -124,6 +131,22 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 AUTH_USER_MODEL = 'accounts.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth_backend.EmailBackend',   # <-- enable login using email
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 OMNIPORT_CLIENT_ID = "<your-client-id>"
 OMNIPORT_CLIENT_SECRET = "<your-client-secret>"

@@ -1,18 +1,22 @@
-import axios from "axios";
+// src/services/api.ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const API = axios.create({
-  baseURL: "http://127.0.0.1:8000",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+export const api = createApi({
+  reducerPath: "api",
+  baseQuery: fetchBaseQuery({
+    baseUrl: "http://localhost:8000",   // <--- FIXED
+    prepareHeaders: (headers, { getState }) => {
+  const token = (getState() as any).auth?.access;   // access token only
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (token && token !== "undefined" && token !== "null") {
+    headers.set("Authorization", `Bearer ${token}`);
   }
-  return config;
+
+  return headers;
+}
+  }),
+  tagTypes: ["Auth", "Events", "Photos", "Users"],
+  endpoints: () => ({}),  // keep empty for now
 });
 
-export default API;
+export default api;

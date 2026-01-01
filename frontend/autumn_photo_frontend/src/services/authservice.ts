@@ -1,31 +1,36 @@
-import API from "./api";
+import axios from "axios";
 
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
+const API = axios.create({
+  baseURL: "http://localhost:8000",
+});
 
-export interface RegisterPayload {
-  email: string;
-  password: string;
-  full_name: string;
-}
+// Attach access token automatically
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-export const registerUser = async (data: RegisterPayload) => {
-  const response = await API.post("/accounts/register/", data);
-  return response.data;
+export const registerUser = async (data: any) => {
+  const res = await API.post("/accounts/register/", data);
+  return res.data;
 };
 
-export const verifyOTP = async (data: { email: string; otp: string }) => {
-  const response = await API.post("/accounts/verify-otp/", data);
-  return response.data;
+export const verifyOtp = async (data: { email: string; otp: string }) => {
+  const res = await API.post("/accounts/verify-otp/", data);
+  return res.data;
 };
 
-export const loginUser = async (data: LoginPayload) => {
-  const response = await API.post("/accounts/login/", data);
-  return response.data;
+export const loginUser = async (data: { email: string; password: string }) => {
+  const res = await API.post("/accounts/login/", data);
+  return res.data; // contains access/refresh
 };
 
-export const getProfile=()=>{
-    return API.get('/accounts/profile/');
+export const refreshToken = async () => {
+  const refresh = localStorage.getItem("refresh");
+  if (!refresh) return null;
+
+  const res = await API.post("/token/refresh/", { refresh });
+  localStorage.setItem("access", res.data.access);
+  return res.data.access;
 };

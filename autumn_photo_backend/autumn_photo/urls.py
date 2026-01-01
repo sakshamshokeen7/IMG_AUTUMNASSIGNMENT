@@ -14,17 +14,24 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls.static import static
+from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path,include
+import os
+from autumn_photo.settings import BASE_DIR
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/',include('accounts.urls')),
-    path('events/',include('events.urls')),
+    path('api/admin/', admin.site.urls),
+    path('api/events/',include('events.urls')),
     path("", lambda request: HttpResponse("Backend is running!")),
-    path('photos/',include('photos.urls')),
-    path('dashboard/',include('dashboard.urls')),
-    path('adminpanel/',include('adminpanel.urls')),
-    path('notifications/', include('notifications.urls')),
+    path('api/photos/',include('photos.urls')),
+    path('api/dashboard/',include('dashboard.urls')),
+    path('api/adminpanel/',include('adminpanel.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path("api/accounts/", include("accounts.urls")),
 ]
+if settings.DEBUG:
+    # Serve media files during development using MEDIA_URL and MEDIA_ROOT
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

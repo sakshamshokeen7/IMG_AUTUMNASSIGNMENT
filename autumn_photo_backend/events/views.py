@@ -1,5 +1,5 @@
 from requests import Response
-from rest_framework import permissions,generics
+from rest_framework import permissions,generics,filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,16 +13,18 @@ from .permissions import ISADMIN_OR_COORDINATOR
 
 # Create your views here.
 class EventListApiView(generics.ListCreateAPIView):
-    
-    serializer_class=EventSerializer
+    serializer_class = EventSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'slug', 'description']
+
     def get_queryset(self):
-        user=self.request.user
-        if user.is_authenticated and user.role=='ADMIN':
+        user = self.request.user
+        if user.is_authenticated and user.role == 'ADMIN':
             return Event.objects.all()
         if user.is_authenticated:
             return Event.objects.filter(
-                models.Q(is_public=True) |
-                models.Q(coordinators=user)
+                Q(is_public=True) |
+                Q(coordinators=user)
             )
         return Event.objects.filter(is_public=True)
     
@@ -42,7 +44,7 @@ class EventDetailApiView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[permissions.IsAuthenticated,ISADMIN_OR_COORDINATOR] 
     
 class EventPhotoGalleryAPIView(APIView):
-    permission_classes = [ISADMIN_OR_COORDINATOR]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, event_id):
         try:
@@ -67,7 +69,7 @@ class EventPhotoGalleryAPIView(APIView):
         else:  
             photos = photos.order_by("-created_at")
 
-        serializer = EventPhotoSerializer(photos, many=True)
+        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
         return Response({
             "event": event.name,
             "total_photos": photos.count(),
