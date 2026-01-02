@@ -7,6 +7,7 @@ import OTPVerifyPage from "../pages/auth/OtpVerifyPage";
 import EventsPage from "../pages/events/EventsPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import ProfilePage from "../pages/profile/profilepage";
+import UploadPage from "../pages/photos/UploadPage";
 
 import ProtectedRoute from "./protectedroutes";
 
@@ -23,6 +24,9 @@ export default function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-otp" element={<OTPVerifyPage />} />
       <Route path="/events" element={<EventsPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/photos/upload" element={<UploadPage />} />
+      </Route>
 
       {/* Protected Pages */}
       <Route element={<ProtectedRoute />}>
