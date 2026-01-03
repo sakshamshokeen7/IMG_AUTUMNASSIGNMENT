@@ -42,9 +42,7 @@ finally {
     };
   return (
     <div className="min-h-screen w-screen flex">
-      {/* Left Form Panel */}
       <div className="flex-1 flex items-center justify-center relative bg-white">
-        {/* Background overlay behind the form */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 opacity-80 z-0" />
 
         <form
@@ -131,8 +129,6 @@ finally {
           </p>
         </form>
       </div>
-
-      {/* Right Branding Panel */}
       <div className="hidden md:flex w-[45%] items-center justify-center text-white bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800">
         <div className="max-w-md p-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">Join Autumn Gallery</h2>

@@ -4,26 +4,22 @@ import { verifyOtp } from "../../services/authservice";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 
 export default function VerifyOtpPage() {
-  // --- Technical state and routing (kept exactly from your original code) ---
-  const [otp, setOtp] = useState(""); // will be kept as a string when submitting
+  const [otp, setOtp] = useState(""); 
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const email = useLocation().state?.email;
-
-  // --- UI helpers (keeps technical behavior identical: verifyOtp({ email, otp })) ---
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
   const digits = otp.split("").slice(0, 6);
   while (digits.length < 6) digits.push("");
 
   useEffect(() => {
-    // focus first empty input on mount
     const firstEmpty = digits.findIndex((d) => d === "");
     const idx = firstEmpty === -1 ? 5 : firstEmpty;
     inputsRef.current[idx]?.focus();
-  }, []); // run once on mount
+  }, []); 
 
   const handleChangeDigit = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // only digits
+    if (!/^\d*$/.test(value)) return; 
     const next = [...digits];
     next[index] = value.slice(-1);
     const joined = next.join("");
@@ -53,7 +49,6 @@ export default function VerifyOtpPage() {
     inputsRef.current[5]?.focus();
   };
 
-  // keep the technical verify behavior exactly as in your original code
   const handleVerify = async () => {
     try {
       await verifyOtp({ email, otp });
@@ -66,16 +61,13 @@ export default function VerifyOtpPage() {
 
   return (
     <div className="min-h-screen w-screen flex overflow-hidden">
-      {/* Left Form Panel */}
       <div className="flex-1 flex items-center justify-center p-6 bg-white relative">
-        {/* Background layers behind the form */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20 z-0" />
         <div className="absolute inset-0 opacity-[0.03] z-0 pointer-events-none">
           <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-500 blur-3xl rounded-full" />
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500 blur-3xl rounded-full" />
         </div>
 
-        {/* Card */}
         <div className="relative z-10 w-full max-w-md">
           <div className="text-center mb-6">
             <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 shadow-xl mx-auto mb-4">
@@ -101,7 +93,6 @@ export default function VerifyOtpPage() {
             }}
             className="space-y-6"
           >
-            {/* OTP inputs (visual/UI only) */}
             <div className="flex items-center justify-center gap-3">
               {digits.map((digit, i) => (
                 <input
@@ -143,7 +134,6 @@ export default function VerifyOtpPage() {
         </div>
       </div>
 
-      {/* Right Hero Section (large screens) */}
       <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 justify-center items-center text-white p-12 relative overflow-hidden">
         <div className="text-center max-w-lg space-y-6 z-10">
           <h2 className="text-5xl font-bold">Autumn Photography Hub</h2>

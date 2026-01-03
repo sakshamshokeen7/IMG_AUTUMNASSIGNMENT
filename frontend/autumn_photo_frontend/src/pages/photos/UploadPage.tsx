@@ -99,8 +99,6 @@ export default function UploadPage() {
                 ))}
               </select>
             </div>
-
-            {/* Drop Zone */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
