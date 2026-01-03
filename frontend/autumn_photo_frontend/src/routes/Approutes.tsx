@@ -15,11 +15,7 @@ import ProtectedRoute from "./protectedroutes";
 export default function AppRoutes() {
   return (
     <Routes>
-
-      {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" />} />
-
-      {/* Auth Pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-otp" element={<OTPVerifyPage />} />
@@ -27,13 +23,10 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/photos/upload" element={<UploadPage />} />
       </Route>
-
-      {/* Protected Pages */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
-
     </Routes>
   );
 }

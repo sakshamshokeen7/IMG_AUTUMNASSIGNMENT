@@ -122,7 +122,21 @@ class TagPersonAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, photo_id):
-        serializer = PersonTagSerializer(data=request.data)
+        # Accept either numeric user id or username/email string as `tagged_user`.
+        data = request.data.copy()
+        tagged = data.get("tagged_user")
+        if tagged and not str(tagged).isdigit():
+            # try resolving by username or email
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.filter(username=tagged).first() or User.objects.filter(email=tagged).first()
+                if user:
+                    data["tagged_user"] = user.id
+            except Exception:
+                pass
+
+        serializer = PersonTagSerializer(data=data)
 
         if serializer.is_valid():
             tag = serializer.save(
@@ -220,3 +234,54 @@ class MultiplePhotoUploadAPIView(APIView):
             "uploaded_count": len(uploaded),
             "photos": uploaded
         })
+
+class MyLikedPhotosAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        photos = (
+            Photo.objects.filter(is_deleted=False, likes__user=request.user)
+            .annotate(
+                likes_count=Count("likes"),
+                comments_count=Count("comments"),
+                favourites_count=Count("favourites"),
+            )
+            .order_by("-created_at")
+            .distinct()
+        )
+        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
+        return Response({"photos": serializer.data})
+
+class MyFavouritedPhotosAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        photos = (
+            Photo.objects.filter(is_deleted=False, favourites__user=request.user)
+            .annotate(
+                likes_count=Count("likes"),
+                comments_count=Count("comments"),
+                favourites_count=Count("favourites"),
+            )
+            .order_by("-created_at")
+            .distinct()
+        )
+        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
+        return Response({"photos": serializer.data})
+
+class MyTaggedPhotosAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        photos = (
+            Photo.objects.filter(is_deleted=False, person_tags__tagged_user=request.user)
+            .annotate(
+                likes_count=Count("likes"),
+                comments_count=Count("comments"),
+                favourites_count=Count("favourites"),
+            )
+            .order_by("-created_at")
+            .distinct()
+        )
+        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
+        return Response({"photos": serializer.data})

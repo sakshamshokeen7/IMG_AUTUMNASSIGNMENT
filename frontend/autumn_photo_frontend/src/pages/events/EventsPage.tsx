@@ -1,5 +1,7 @@
 import { useEffect, useState, type SetStateAction } from "react";
+import Navbar from "../../app/Navbar";
 import axios from "../../services/axiosinstances";
+import PhotoModal from "../../components/PhotoModal";
 import { Search, ArrowLeft, Grid3x3, Columns, Images, Calendar, Users, Sparkles } from "lucide-react";
 
 interface Event {
@@ -21,6 +23,8 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [view, setView] = useState("grid");
+  const [openPhotoId, setOpenPhotoId] = useState<number | null>(null);
+  const [openPhotoUrl, setOpenPhotoUrl] = useState<string>("");
 
   // Fetch events list
   const fetchEvents = async (query = "") => {
@@ -54,6 +58,7 @@ export default function EventsPage() {
 
   return (
     <div className="h-screen w-screen overflow-y-auto bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
+      <Navbar />
       {/* Ambient background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
@@ -227,6 +232,7 @@ export default function EventsPage() {
                     {photos.map((p) => (
                       <div
                         key={p.id}
+                        onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
                         className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer"
                       >
                         <img
@@ -247,6 +253,7 @@ export default function EventsPage() {
                     {photos.map((p) => (
                       <div
                         key={p.id}
+                        onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
                         className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer mb-6 break-inside-avoid"
                       >
                         <img
@@ -268,6 +275,7 @@ export default function EventsPage() {
                       {photos.map((p) => (
                         <div
                           key={p.id}
+                          onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
                           className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 flex-shrink-0 snap-center"
                         >
                           <img
@@ -282,6 +290,13 @@ export default function EventsPage() {
                       ))}
                     </div>
                   </div>
+                )}
+                {openPhotoId && (
+                  <PhotoModal
+                    photoId={openPhotoId}
+                    photoUrl={openPhotoUrl}
+                    onClose={() => { setOpenPhotoId(null); setOpenPhotoUrl(""); }}
+                  />
                 )}
               </>
             ) : (

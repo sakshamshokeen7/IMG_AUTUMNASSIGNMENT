@@ -8,7 +8,6 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   const logout = () => {
-    // simple local logout: clear tokens and update store if present
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     try { dispatch({ type: "auth/logout" }); } catch(e){}
@@ -24,6 +23,7 @@ export default function Navbar() {
       <div className="flex items-center gap-3">
         {isAuth && (
           <>
+            <Link to="/profile" className="px-3 py-1 bg-indigo-600 rounded">Profile</Link>
             <Link to="/photos/upload" className="px-3 py-1 bg-indigo-600 rounded">Upload</Link>
             <button onClick={logout} className="px-3 py-1 bg-red-600 rounded">Logout</button>
           </>

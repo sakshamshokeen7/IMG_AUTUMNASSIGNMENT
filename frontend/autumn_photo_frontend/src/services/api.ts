@@ -1,12 +1,11 @@
-// src/services/api.ts
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:8000",   // <--- FIXED
+    baseUrl: "http://localhost:8000",   
     prepareHeaders: (headers, { getState }) => {
-  const token = (getState() as any).auth?.access;   // access token only
+  const token = (getState() as any).auth?.access;   
 
   if (token && token !== "undefined" && token !== "null") {
     headers.set("Authorization", `Bearer ${token}`);
@@ -16,7 +15,7 @@ export const api = createApi({
 }
   }),
   tagTypes: ["Auth", "Events", "Photos", "Users"],
-  endpoints: () => ({}),  // keep empty for now
+  endpoints: () => ({}), 
 });
 
 export default api;

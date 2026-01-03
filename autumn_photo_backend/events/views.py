@@ -1,9 +1,9 @@
-from requests import Response
 from rest_framework import permissions,generics,filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count
+from django.db.models import Q
 from photos.models import Photo
 from photos.serializers import EventPhotoSerializer
 from .models import Event
@@ -29,7 +29,7 @@ class EventListApiView(generics.ListCreateAPIView):
         return Event.objects.filter(is_public=True)
     
 class EventCreateApiView(generics.CreateAPIView):
-    query_set=Event.objects.all()
+    queryset = Event.objects.all()
     serializer_class=EventSerializer
     permission_classes=[permissions.IsAuthenticated]
 
@@ -39,7 +39,7 @@ class EventCreateApiView(generics.CreateAPIView):
         serializer.save(created_by=self.request.user)
 
 class EventDetailApiView(generics.RetrieveUpdateDestroyAPIView):
-    query_set=Event.objects.all()
+    queryset = Event.objects.all()
     serializer_class=EventSerializer
     permission_classes=[permissions.IsAuthenticated,ISADMIN_OR_COORDINATOR] 
     

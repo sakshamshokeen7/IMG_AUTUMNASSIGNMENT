@@ -7,6 +7,7 @@ from .serializers import RegisterSerializer, VerifyOTPSerializer
 from .jwt_serializers import LoginSerializer      # << important
 from .models import User
 from .omniport import get_omniport_login_url, get_tokens, get_user_info
+from rest_framework.permissions import IsAuthenticated
 
 
 # ---------------- REGISTER -------------------
@@ -89,3 +90,22 @@ class OmniportCallbackAPIView(APIView):
             "message": "Omniport login successful",
             "email": user.email,
         }, status=200)
+
+
+class ProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        # derive a username: prefer full_name, fallback to email local-part
+        full_name = getattr(user, "full_name", "") or ""
+        if full_name:
+            username = full_name
+        else:
+            username = user.email.split("@")[0] if user.email else ""
+
+        return Response({
+            "email": user.email,
+            "full_name": full_name,
+            "username": username,
+        })
