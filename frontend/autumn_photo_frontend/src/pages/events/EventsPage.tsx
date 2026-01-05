@@ -105,7 +105,7 @@ export default function EventsPage() {
                   <div
                     key={ev.id}
                     onClick={() => handleSelectEvent(ev)}
-                    className="group cursor-pointer rounded-2xl border border-gray-800 hover:border-white-500/50 transition-all duration-300 bg-gray-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl hover:shadow-purple-600/20 hover:-translate-y-1"
+                    className="group cursor-pointer rounded-2xl border border-gray-800 hover:border-white-500/50 transition-all duration-300 bg-gray-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl hover:shadow-blue-600/20 hover:-translate-y-1"
                   >
                     <div className="relative overflow-hidden h-52">
                       <img
