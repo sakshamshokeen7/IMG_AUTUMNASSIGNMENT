@@ -7,7 +7,8 @@ import OTPVerifyPage from "../pages/auth/OtpVerifyPage";
 import EventsPage from "../pages/events/EventsPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import ProfilePage from "../pages/profile/profilepage";
-import UploadPage from "../pages/photos/UploadPage";
+import AdminPanel from "../pages/admin/AdminPanel";
+import PhotographerDashboard from "../pages/photographer/PhotographerDashboard";
 
 import ProtectedRoute from "./protectedroutes";
 
@@ -21,11 +22,13 @@ export default function AppRoutes() {
       <Route path="/verify-otp" element={<OTPVerifyPage />} />
       <Route path="/events" element={<EventsPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/photos/upload" element={<UploadPage />} />
+        <Route path="/photos/upload" element={<Navigate to="/photographer" replace />} />
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/photographer" element={<PhotographerDashboard />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Route>
     </Routes>
   );

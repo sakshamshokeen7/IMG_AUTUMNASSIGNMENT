@@ -2,6 +2,7 @@ import { useEffect, useState, type SetStateAction } from "react";
 import Navbar from "../../app/Navbar";
 import axios from "../../services/axiosinstances";
 import PhotoModal from "../../components/PhotoModal";
+import { getMediaUrl } from "../../utils/media";
 import { Search, ArrowLeft, Grid3x3, Columns, Images, Calendar, Users, Sparkles } from "lucide-react";
 
 interface Event {
@@ -37,9 +38,14 @@ export default function EventsPage() {
   };
 
  const fetchPhotos = async (id:any) => {
-  const res = await axios.get(`/events/${id}/photos/`);
-  console.log("Photos -> ", res.data.photos);
-  setPhotos(res.data.photos);          
+  try {
+    const res = await axios.get(`/events/${id}/photos/`);
+    console.log("Photos -> ", res.data.photos);
+    setPhotos(res.data.photos || []);
+  } catch (e) {
+    console.error('Failed to fetch photos for event', id, e);
+    setPhotos([]);
+  }
 };
 
 
@@ -58,14 +64,9 @@ export default function EventsPage() {
   return (
     <div className="h-screen w-screen overflow-y-auto bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
       <Navbar />
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
       <div className="relative z-10 px-6 md:px-10 lg:px-16 py-8 md:py-10">
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg shadow-purple-600/30">
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-dark-600 to-black-600 shadow-lg shadow-white-600/30">
             <Sparkles className="w-8 h-8" />
           </div>
           <div>
@@ -104,7 +105,7 @@ export default function EventsPage() {
                   <div
                     key={ev.id}
                     onClick={() => handleSelectEvent(ev)}
-                    className="group cursor-pointer rounded-2xl border border-gray-800 hover:border-purple-500/50 transition-all duration-300 bg-gray-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl hover:shadow-purple-600/20 hover:-translate-y-1"
+                    className="group cursor-pointer rounded-2xl border border-gray-800 hover:border-white-500/50 transition-all duration-300 bg-gray-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl hover:shadow-purple-600/20 hover:-translate-y-1"
                   >
                     <div className="relative overflow-hidden h-52">
                       <img
@@ -119,21 +120,21 @@ export default function EventsPage() {
                       </div>
 
                      
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-purple-600/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-medium">
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white-600/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-medium">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>Upcoming</span>
                       </div>
                     </div>
 
                     <div className="p-5">
-                      <h2 className="text-xl font-bold mb-2 group-hover:text-purple-400 transition-colors line-clamp-1">
+                      <h2 className="text-xl font-bold mb-2 group-hover:text-white-400 transition-colors line-clamp-1">
                         {ev.name}
                       </h2>
                       <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
                         {ev.description}
                       </p>
                       
-                      <div className="mt-4 flex items-center text-sm text-purple-400 font-medium">
+                      <div className="mt-4 flex items-center text-sm text-white-400 font-medium">
                         <span>View photos</span>
                         <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -161,7 +162,7 @@ export default function EventsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
               <div>
                 <button
-                  className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors mb-3 group"
+                  className="inline-flex items-center gap-2 text-purple-400 hover:text-white-300 transition-colors mb-3 group"
                   onClick={() => {
                     setSelectedEvent(null);
                     setPhotos([]);
@@ -221,10 +222,7 @@ export default function EventsPage() {
                         onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
                         className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer"
                       >
-                        <img
-                          src={p.thumbnail_file.startsWith("http") 
-        ? p.thumbnail_file 
-        : `http://127.0.0.1:8000${p.thumbnail_file}`}
+                        <img src={getMediaUrl(p.thumbnail_file)}
                           alt="Event photo"
                           className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -243,9 +241,7 @@ export default function EventsPage() {
                         className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer mb-6 break-inside-avoid"
                       >
                         <img
-                          src={p.thumbnail_file.startsWith("http") 
-        ? p.thumbnail_file 
-        : `http://127.0.0.1:8000${p.thumbnail_file}`}
+                          src={getMediaUrl(p.thumbnail_file)}
                           alt="Event photo"
                           className="w-full group-hover:scale-110 transition-transform duration-500"
                         />
@@ -265,9 +261,7 @@ export default function EventsPage() {
                           className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 flex-shrink-0 snap-center"
                         >
                           <img
-                            src={p.thumbnail_file.startsWith("http") 
-        ? p.thumbnail_file 
-        : `http://127.0.0.1:8000${p.thumbnail_file}`}
+                            src={getMediaUrl(p.thumbnail_file)}
                             alt="Event photo"
                             className="h-80 w-auto object-cover group-hover:scale-110 transition-transform duration-500"
                           />

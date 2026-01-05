@@ -71,6 +71,23 @@ class PhotoDetailAPIView(APIView):
         serializer = PhotoDetailSerializer(photo)
         return Response(serializer.data)
 
+    def delete(self, request, photo_id):
+        photo = Photo.objects.filter(id=photo_id).first()
+        if not photo:
+            return Response({"error": "Photo not found"}, status=404)
+
+        # allow uploader or staff to delete
+        user = request.user
+        if not user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
+
+        if photo.uploader != user and not user.is_staff:
+            return Response({"error": "Not authorized"}, status=403)
+
+        photo.is_deleted = True
+        photo.save()
+        return Response({"message": "Photo deleted"})
+
 class ToggleLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -211,28 +228,30 @@ class MultiplePhotoUploadAPIView(APIView):
 
         uploaded = []
 
-        for file in files:
-            thumb = generate_thumbnail(file)
-            display = generate_display(file)
+        from .tasks import process_photo
 
+        for file in files:
+            # create placeholder Photo, save original_file to storage
             photo = Photo.objects.create(
                 event=event,
                 uploader=request.user,
-                exif_metadata=extract_exif(file),
+                processing_status='pending',
             )
-
             photo.original_file.save(file.name, file)
-            photo.thumbnail_file.save(f"thumb_{file.name}", thumb)
-            photo.display_file.save(f"display_{file.name}", display)
+            photo.save()
+
+            # enqueue background processing
+            process_photo.delay(photo.id)
 
             uploaded.append({
                 "photo_id": photo.id,
-                "thumbnail": photo.thumbnail_file.url
+                "status": photo.processing_status
             })
 
         return Response({
             "uploaded_count": len(uploaded),
-            "photos": uploaded
+            "photos": uploaded,
+            "message": "Files accepted and processing in background"
         })
 
 class MyLikedPhotosAPIView(APIView):

@@ -37,13 +37,13 @@ catch (err: any) {
       <div className="flex-1 flex items-center justify-center p-6 bg-white relative">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20" />
         <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-500 blur-3xl rounded-full" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500 blur-3xl rounded-full" />
+          <div className="absolute top-20 left-20 w-72 h-72 bg-black-500 blur-3xl rounded-full" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white-500 blur-3xl rounded-full" />
         </div>
 
         <div className="relative w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 shadow-xl mx-auto mb-6">
+            <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-green-500 shadow-xl mx-auto mb-6">
               <Sparkles className="text-white w-8 h-8" />
             </div>
             <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
@@ -86,7 +86,7 @@ catch (err: any) {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                  {showPassword ? <Eye size={12} /> : <EyeOff size={13} />}
                 </button>
               </div>
             </div>
@@ -109,10 +109,10 @@ catch (err: any) {
           </p>
         </div>
       </div>
-      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 justify-center items-center text-white p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-green-600 justify-center items-center text-white p-12 relative overflow-hidden">
         <div className="text-center max-w-lg space-y-6 z-10">
           <h2 className="text-5xl font-bold">Autumn Photography Hub</h2>
-          <p className="text-indigo-200 text-lg">
+          <p className="text-black-200 text-lg">
             Upload, explore and enjoy beautiful campus memories.
           </p>
         </div>

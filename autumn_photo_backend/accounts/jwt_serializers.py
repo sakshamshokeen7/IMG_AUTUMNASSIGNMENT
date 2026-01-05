@@ -20,10 +20,13 @@ class LoginSerializer(serializers.Serializer):
 
         refresh = RefreshToken.for_user(user)
 
+        # If the user is a Django superuser treat them as ADMIN for frontend role checks
+        role = "ADMIN" if getattr(user, "is_superuser", False) else getattr(user, "role", "PUBLIC")
+
         return {
             "message": "Login successful",
             "email": user.email,
-            "role": user.role,
+            "role": role,
             "refresh": str(refresh),            # save in localStorage
             "access": str(refresh.access_token) # use in headers
         }

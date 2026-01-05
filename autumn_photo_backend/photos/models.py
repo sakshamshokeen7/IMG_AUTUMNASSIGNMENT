@@ -27,6 +27,11 @@ class Photo(models.Model):
     view_count=models.PositiveIntegerField(default=0)
     download_count=models.PositiveIntegerField(default=0)
     is_deleted=models.BooleanField(default=False)
+    processing_status = models.CharField(
+        max_length=20,
+        choices=[('pending','Pending'),('processing','Processing'),('done','Done'),('failed','Failed')],
+        default='pending'
+    )
     created_at=models.DateTimeField(auto_now_add=True)
     tags=models.JSONField(default=dict,blank=True)
 

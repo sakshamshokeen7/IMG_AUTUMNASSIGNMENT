@@ -156,7 +156,7 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
               <div className="font-medium mb-2">Tag someone</div>
               <div className="flex gap-2">
                 <input value={tagUser} onChange={(e)=>setTagUser(e.target.value)} placeholder="username or id" className="flex-1 p-2 bg-gray-800 rounded" />
-                <button onClick={tagPerson} className="px-3 py-2 bg-purple-600 rounded">Tag</button>
+                <button onClick={tagPerson} className="px-3 py-2 bg-black-600 rounded">Tag</button>
               </div>
             </div>
 
@@ -173,7 +173,7 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
 
               <div className="flex gap-2">
                 <input value={newComment} onChange={(e)=>setNewComment(e.target.value)} placeholder="Add a comment" className="flex-1 p-2 bg-gray-800 rounded" />
-                <button onClick={addComment} className="px-3 py-2 bg-indigo-600 rounded">Send</button>
+                <button onClick={addComment} className="px-3 py-2 bg-black-600 rounded">Send</button>
               </div>
             </div>
           </div>

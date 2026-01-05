@@ -45,8 +45,17 @@ class EventPhotoSerializer(serializers.ModelSerializer):
 
     def get_thumbnail_file(self, obj):
         request = self.context.get("request")
-        if obj.thumbnail_file:
-            return request.build_absolute_uri(obj.thumbnail_file.url)
+        # Fallback: return thumbnail if present, otherwise use display or original
+        file_field = None
+        if getattr(obj, "thumbnail_file", None):
+            file_field = obj.thumbnail_file
+        elif getattr(obj, "display_file", None):
+            file_field = obj.display_file
+        elif getattr(obj, "original_file", None):
+            file_field = obj.original_file
+
+        if file_field and hasattr(file_field, "url"):
+            return request.build_absolute_uri(file_field.url)
         return None
 
     class Meta:

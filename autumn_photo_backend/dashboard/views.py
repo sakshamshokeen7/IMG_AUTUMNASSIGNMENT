@@ -55,8 +55,15 @@ class PhotographerUploadsAPIView(APIView):
 
         data=[
             {
-                'id':p.id,
-                'thumbnail':p.thumbnail_file.url,
+                'id': p.id,
+                # prefer thumbnail, otherwise fall back to display or original
+                'thumbnail': (
+                    (p.thumbnail_file.url if getattr(p, 'thumbnail_file') and getattr(p.thumbnail_file, 'url', None) else None)
+                    or (p.display_file.url if getattr(p, 'display_file') and getattr(p.display_file, 'url', None) else None)
+                    or (p.original_file.url if getattr(p, 'original_file') and getattr(p.original_file, 'url', None) else None)
+                ),
+                'display': p.display_file.url if getattr(p, 'display_file') and getattr(p.display_file, 'url', None) else None,
+                'original': p.original_file.url if getattr(p, 'original_file') and getattr(p.original_file, 'url', None) else None,
                 'likes_count':p.likes_count,
                 'comments_count':p.comments_count,
                 'favourites_count':p.favourites_count,
@@ -64,6 +71,6 @@ class PhotographerUploadsAPIView(APIView):
                 'created_at':p.created_at,
             } for p in photos            
         ]
-        return Response({'uplaods':data})
+        return Response({'uploads':data})
             
         

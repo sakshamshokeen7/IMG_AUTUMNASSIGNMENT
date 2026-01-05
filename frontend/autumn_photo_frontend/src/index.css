@@ -78,7 +78,7 @@ button:focus-visible {
 
 .btn-primary {
   @apply w-full flex items-center justify-center gap-2 py-3.5 rounded-xl 
-  bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold 
+  bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold 
   hover:from-indigo-700 hover:to-indigo-600 transition-all shadow-lg 
   disabled:opacity-50 disabled:cursor-not-allowed;
 }

@@ -50,7 +50,7 @@ finally {
           className="relative z-10 w-full max-w-md p-8 space-y-6"
         >
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
+            <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
               <Sparkles size={30} className="text-white" />
             </div>
 
@@ -116,7 +116,7 @@ finally {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 flex justify-center gap-2 items-center disabled:opacity-60"
+            className="btn-primary w-full flex justify-center items-center"
           >
             {loading ? "Creating..." : <>Register <ArrowRight size={20} /></>}
           </button>
@@ -129,7 +129,7 @@ finally {
           </p>
         </form>
       </div>
-      <div className="hidden md:flex w-[45%] items-center justify-center text-white bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800">
+      <div className="hidden md:flex w-[45%] items-center justify-center text-white bg-green-600 p-12 relative overflow-hidden">
         <div className="max-w-md p-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">Join Autumn Gallery</h2>
           <p className="text-lg opacity-90">

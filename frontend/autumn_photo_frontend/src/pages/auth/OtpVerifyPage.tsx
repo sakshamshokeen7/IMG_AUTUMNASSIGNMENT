@@ -70,7 +70,7 @@ export default function VerifyOtpPage() {
 
         <div className="relative z-10 w-full max-w-md">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 shadow-xl mx-auto mb-4">
+            <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-green-500 shadow-xl mx-auto mb-4">
               <Sparkles className="text-white w-8 h-8" />
             </div>
             <h1 className="text-3xl font-bold text-gray-800">Verify your email</h1>
@@ -119,7 +119,7 @@ export default function VerifyOtpPage() {
             <button
               type="submit"
               disabled={otp.length !== 6}
-              className="w-full py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 flex justify-center gap-2 items-center disabled:opacity-60"
+              className="btn-primary w-full flex items-center justify-center gap-2"
             >
               Verify <ArrowRight size={18} />
             </button>
@@ -134,7 +134,7 @@ export default function VerifyOtpPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 justify-center items-center text-white p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-green-600 justify-center items-center text-white p-12 relative overflow-hidden">
         <div className="text-center max-w-lg space-y-6 z-10">
           <h2 className="text-5xl font-bold">Autumn Photography Hub</h2>
           <p className="text-indigo-200 text-lg">Upload, explore and enjoy beautiful campus memories.</p>

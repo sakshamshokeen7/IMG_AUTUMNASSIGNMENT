@@ -4,7 +4,7 @@ from django.conf import settings
 # Create your models here.
 class Event(models.Model):
     name=models.CharField(max_length=255)
-    slug=models.SlugField(unique=True)
+    slug=models.SlugField(unique=True,blank=True,null=True)
     description=models.TextField(blank=True,null=True)
     start_datetime=models.DateTimeField()
     end_datetime=models.DateTimeField()

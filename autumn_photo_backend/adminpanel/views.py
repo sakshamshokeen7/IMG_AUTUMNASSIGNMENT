@@ -12,7 +12,7 @@ class UserListAPIView(APIView):
 
     def get(self, request):
         users = User.objects.all().values(
-            "id", "email", "full_name", "is_active"
+            "id", "email", "full_name", "is_active", "role", "is_superuser"
         )
         return Response({"users": list(users)})
 

@@ -104,8 +104,13 @@ class ProfileAPIView(APIView):
         else:
             username = user.email.split("@")[0] if user.email else ""
 
+        # expose role information so frontend can determine admin access
+        role = "ADMIN" if getattr(user, "is_superuser", False) else getattr(user, "role", "PUBLIC")
+
         return Response({
             "email": user.email,
             "full_name": full_name,
             "username": username,
+            "role": role,
+            "is_superuser": getattr(user, "is_superuser", False),
         })

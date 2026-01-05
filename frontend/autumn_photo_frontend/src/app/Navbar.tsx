@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import axios from "../services/axiosinstances";
+import { setRole } from "../features/auth/authSlice";
 
 export default function Navbar() {
   const isAuth = useSelector((state:any) => state.auth.isAuthenticated);
+  const roleFromState = useSelector((state:any) => state.auth.role);
+  const role = roleFromState || localStorage.getItem("role");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -14,6 +18,23 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  useEffect(() => {
+    if (isAuth && !role) {
+      (async () => {
+        try {
+          const res = await axios.get('/accounts/me/');
+          const data = res.data || {};
+          let r = data.role;
+          if (!r && data.is_superuser) r = 'ADMIN';
+          if (r) dispatch(setRole(r));
+        } catch (e) {
+        }
+      })();
+    }
+  }, [isAuth, role]);
+
+  const roleVal = (role || '').toString().trim().toUpperCase();
+
   return (
     <nav className="w-full bg-slate-900 text-white p-3 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -23,8 +44,13 @@ export default function Navbar() {
       <div className="flex items-center gap-3">
         {isAuth && (
           <>
-            <Link to="/profile" className="px-3 py-1 bg-indigo-600 rounded">Profile</Link>
-            <Link to="/photos/upload" className="px-3 py-1 bg-indigo-600 rounded">Upload</Link>
+            {roleVal === 'ADMIN' && (
+              <Link to="/admin" className="px-3 py-1 bg-black-600 rounded" >Admin</Link>
+            )}
+            {roleVal === 'PHOTOGRAPHER' && (
+              <Link to="/photographer" className="px-3 py-1 bg-black-600 rounded">Photographer Dashboard</Link>
+            )}
+            <Link to="/profile" className="px-3 py-1 bg-black-600 rounded text-white">Profile</Link>
             <button onClick={logout} className="px-3 py-1 bg-red-600 rounded">Logout</button>
           </>
         )}
