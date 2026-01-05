@@ -105,11 +105,19 @@ export default function AdminPanel() {
   };
 
   const deleteEvent = async (id:number) => {
+    const ok = window.confirm('Delete this event? This action cannot be undone.');
+    if (!ok) return;
     try {
-      await axios.delete(`/events/${id}/`);
-      await refreshEvents();
+      const resp = await axios.delete(`/events/${id}/`);
+      if (resp.status === 204 || resp.status === 200) {
+        setEvents(prev => prev.filter(e => e.id !== id));
+      } else {
+        await refreshEvents();
+      }
     } catch (e:any) {
-      console.error(e);
+      console.error('Failed to delete event', e);
+      const msg = e.response?.data || e.message || String(e);
+      setError(msg);
     }
   };
 

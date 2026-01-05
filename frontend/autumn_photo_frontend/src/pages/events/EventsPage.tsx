@@ -6,6 +6,7 @@ import { getMediaUrl } from "../../utils/media";
 import { Search, ArrowLeft, Grid3x3, Columns, Images, Calendar, Users, Sparkles } from "lucide-react";
 
 interface Event {
+  cover_upload: string;
   id: number;
   name: string;
   description: string;
@@ -109,7 +110,7 @@ export default function EventsPage() {
                   >
                     <div className="relative overflow-hidden h-52">
                       <img
-                        src={ev.cover_photo || "/placeholder_event.jpg"}
+                        src={getMediaUrl(ev.cover_upload) || "/placeholder_event.jpg"}
                         alt={ev.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
