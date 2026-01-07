@@ -4,6 +4,7 @@ import axios from '../../services/axiosinstances';
 import { getMediaUrl } from '../../utils/media';
 import MultiUploader from '../../components/MultiUploader';
 
+
 export default function PhotographerDashboard(){
   const [stats, setStats] = useState<any>(null);
   const [uploads, setUploads] = useState<any[]>([]);

@@ -110,7 +110,7 @@ export default function EventsPage() {
                   >
                     <div className="relative overflow-hidden h-52">
                       <img
-                        src={getMediaUrl(ev.cover_upload) || "/placeholder_event.jpg"}
+                        src={getMediaUrl(ev.cover) || "/placeholder_event.jpg"}
                         alt={ev.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />

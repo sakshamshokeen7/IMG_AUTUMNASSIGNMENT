@@ -1,146 +1,198 @@
-import React, { useState, useRef, useEffect } from "react";
-import axios from "../services/axiosinstances";
+import React, { useCallback, useEffect, useState } from "react";
+import Navbar from "../app/Navbar";
+import { getEvents } from "../services/eventservice";
+import photoService from "../services/photoService";
+import { Upload, X, Image, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function MultiUploader({ onUploaded }: { onUploaded?: () => void }) {
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
-  const [eventId, setEventId] = useState<number | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+type EventType = {
+  id: number;
+  name: string;
+};
+
+export default function MultipleUploadPage() {
   const [dragOver, setDragOver] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  /* Load events */
   useEffect(() => {
-    (async () => {
+    const loadEvents = async () => {
       try {
-        const res = await axios.get('/events/');
-        const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
-        setEvents(data);
-        if (data.length) setEventId(data[0].id);
+        const data = await getEvents();
+        setEvents(data?.events ?? data ?? []);
       } catch (e) {
+        console.error("Failed loading events", e);
+        setEvents([]);
       }
-    })();
+    };
+
+    loadEvents();
   }, []);
 
-  const onDrop = (e: React.DragEvent) => {
+  /* Drag & Drop */
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
-    const dt = e.dataTransfer;
-    const list = Array.from(dt.files).filter(f => f.type.startsWith('image/'));
-    setFiles(prev => [...prev, ...list]);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFiles((prev) => [...prev, ...droppedFiles]);
+  }, []);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    setFiles((prev) => [...prev, ...Array.from(e.target.files)]);
   };
 
-  const upload = async () => {
-    if (!eventId) {
-      setMessage('Please select an event');
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* Upload */
+  const handleUpload = async () => {
+    if (!selectedEvent) {
+      setMessage("Please select an event");
       return;
     }
+
     if (files.length === 0) {
-      setMessage('Select files first');
+      setMessage("Please add files to upload");
       return;
     }
+
     setUploading(true);
     setMessage(null);
 
-    const form = new FormData();
-    form.append('event_id', String(eventId));
-    files.forEach(f => form.append('files', f));
-
     try {
-      const res = await axios.post('/photos/upload/multiple/', form);
-      setMessage(res.data.message || 'Uploaded');
+      const res = await photoService.uploadMultiplePhotos(selectedEvent, files);
+      setMessage(`Uploaded ${res.uploaded_count ?? files.length} photos`);
       setFiles([]);
-      onUploaded && onUploaded();
-    } catch (err:any) {
-      setMessage(err.response?.data || String(err));
+    } catch (e: any) {
+      console.error(e);
+      setMessage(e?.response?.data?.detail || "Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="grid lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm"
-          onDragOver={(e)=>{e.preventDefault(); setDragOver(true);}}
-          onDragLeave={()=>setDragOver(false)}
-          onDrop={onDrop}
-        >
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className={`p-4 rounded-full mb-4 transition-colors duration-300 ${dragOver ? 'bg-purple-600/20' : 'bg-gray-800/50'}`}>
-              <svg className={`w-12 h-12 ${dragOver ? 'text-black-400' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="none" />
-            </div>
-            <p className="text-lg font-medium text-gray-300 mb-2">Drag & drop your photos here</p>
-            <p className="text-sm text-gray-500 mb-6">or click to browse from your computer</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
+      
 
-            <label className="cursor-pointer">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-8">
+        <h1 className="text-3xl font-bold mb-6">Upload Photos</h1>
+
+        {/* Event selector */}
+        <div className="mb-6">
+          <label className="block mb-2 text-sm text-gray-300">
+            Select Event
+          </label>
+          <select
+            className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700"
+            value={selectedEvent ?? ""}
+            onChange={(e) => setSelectedEvent(Number(e.target.value))}
+          >
+            <option value="">Choose an event…</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Drop zone */}
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={`p-12 rounded-2xl border-2 border-dashed mb-6 transition ${
+            dragOver
+              ? "border-purple-500 bg-purple-500/10"
+              : "border-gray-700 bg-gray-900/40"
+          }`}
+        >
+          <div className="text-center">
+            <Upload className="mx-auto mb-4 w-10 h-10 text-gray-400" />
+            <p className="text-gray-300">Drag & drop photos here</p>
+            <p className="text-gray-500 text-sm mb-4">or</p>
+
+            <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700">
+              <Image className="w-5 h-5" />
+              Browse Files
               <input
                 type="file"
                 multiple
                 accept="image/*"
-                onChange={(e)=>{
-                  const list = Array.from(e.target.files || []).filter(f=>f.type.startsWith('image/'));
-                  setFiles(prev=>[...prev,...list]);
-                }}
                 className="hidden"
+                onChange={onFileChange}
               />
-              <span className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg shadow-purple-600/30">
-                Choose files
-              </span>
             </label>
-
-            <p className="text-xs text-gray-500 mt-4">Supported formats: JPG, PNG, GIF, WebP</p>
           </div>
         </div>
 
+        {/* Message */}
         {message && (
-          <div className={`flex items-start gap-3 p-4 rounded-xl border ${message.includes('Uploaded') ? 'bg-green-500/10 border-green-500/50 text-green-400' : 'bg-yellow-500/10 border-yellow-500/50 text-yellow-400'}`}>
-            <span className="text-sm font-medium">{message}</span>
+          <div
+            className={`flex items-center gap-2 mb-6 p-4 rounded-xl ${
+              message.includes("Uploaded")
+                ? "bg-green-500/10 text-green-400"
+                : "bg-yellow-500/10 text-yellow-400"
+            }`}
+          >
+            {message.includes("Uploaded") ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
+            <span>{message}</span>
           </div>
         )}
 
-        <button
-          onClick={upload}
-          disabled={uploading || !eventId || files.length === 0}
-          className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold shadow-lg shadow-purple-600/30 transition-all duration-200"
-        >
-          {uploading ? 'Uploading...' : `Upload ${files.length > 0 ? `${files.length} Photo${files.length>1?'s':''}` : 'Photos'}`}
-        </button>
-      </div>
-
-      <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-200">Selected Files</h3>
-          {files.length > 0 && (<span className="px-3 py-1 rounded-full bg-purple-600/20 text-black-400 text-sm font-medium">{files.length} file{files.length>1?'s':''}</span>)}
-        </div>
-
-        {files.length > 0 ? (
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-800">
-            {files.map((f, i) => (
-              <div key={i} className="group flex items-center gap-4 p-4 rounded-xl bg-gray-800/50 border border-gray-700/50 hover:border-white-500/50 transition-all duration-200">
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
-                  <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
-                </div>
+        {/* File list */}
+        {files.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {files.map((file, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-3 rounded-xl bg-gray-800"
+              >
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  className="w-20 h-20 object-cover rounded"
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate mb-1">{f.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span>{(f.size/1024).toFixed(1)} KB</span>
-                    <span>•</span>
-                    <span>{f.type.split('/')[1]?.toUpperCase()}</span>
-                  </div>
+                  <p className="text-sm truncate">{file.name}</p>
+                  <p className="text-xs text-gray-400">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
                 </div>
-                <button onClick={()=>setFiles(prev=>prev.filter((_, idx)=>idx!==i))} className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200">Remove</button>
+                <button
+                  onClick={() => removeFile(i)}
+                  className="text-gray-400 hover:text-red-400"
+                >
+                  <X />
+                </button>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="p-4 rounded-full bg-gray-800/50 mb-4" />
-            <p className="text-gray-400 text-lg font-medium mb-2">No files selected</p>
-            <p className="text-gray-500 text-sm">Add photos to see them here</p>
-          </div>
         )}
+
+        {/* Upload button */}
+        <button
+          onClick={handleUpload}
+          disabled={uploading || !selectedEvent || files.length === 0}
+          className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed"
+        >
+          {uploading
+            ? "Uploading…"
+            : `Upload ${files.length || ""} Photos`}
+        </button>
       </div>
     </div>
   );

@@ -26,7 +26,11 @@ class PhotographerDashboardAPIView(APIView):
         most_liked = {
             "photo_id": most_liked_photo.id,
             "like_count": most_liked_photo.like_count,
-            "thumbnail": most_liked_photo.thumbnail_file.url,
+            "thumbnail": (
+            most_liked_photo.thumbnail_file.url
+            if most_liked_photo.thumbnail_file
+            else None
+        ),
         } if most_liked_photo else None
 
         return Response({
