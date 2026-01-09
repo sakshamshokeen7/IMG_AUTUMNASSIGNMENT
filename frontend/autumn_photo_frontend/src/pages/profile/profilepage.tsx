@@ -19,7 +19,7 @@ const tryGet = async (urls: string[]) => {
 
 const ProfilePage = () => {
     const email = useSelector((s: any) => s.auth.email);
-    const [username, setUsername] = useState<string | null>(null);
+    const [full_name, setFullName] = useState<string | null>(null);
     const [role, setRole] = useState<string | null>(null);
     const [liked, setLiked] = useState<any[]>([]);
     const [favs, setFavs] = useState<any[]>([]);
@@ -51,15 +51,15 @@ const ProfilePage = () => {
             try {
                 const res = await axios.get('/accounts/me/');
                 const data = res.data;
-                if (data?.username) setUsername(data.username);
-                else if (data?.full_name) setUsername(data.full_name);
+                if (data?.full_name) setFullName(data.full_name);
+                else setFullName(data.email);
                 if (data?.role) setRole(data.role);
                 else if (data?.is_superuser) setRole('ADMIN');
             } catch (e) {
                 
                 const maybeFull = localStorage.getItem("full_name") || null;
-                if (maybeFull) setUsername(maybeFull);
-                else if (email) setUsername(email.split("@")[0]);
+                if (maybeFull) setFullName(maybeFull);
+                else if (email) setFullName(email.split("@")[0]);
             }
         })();
     }, []);
@@ -70,7 +70,7 @@ const ProfilePage = () => {
             <div className="px-6 md:px-10 lg:px-16 py-8 md:py-10">
                 <h1 className="text-3xl font-bold mb-4">Profile</h1>
                 <div className="mb-6 p-4 rounded-lg bg-gray-900/50 border border-gray-800">
-                    <div className="text-lg">Username: <span className="text-gray-300">{username || 'Unknown'}</span></div>
+                    <div className="text-lg">Username: <span className="text-gray-300">{full_name|| 'Unknown'}</span></div>
                     <div className="text-lg mt-2">Email: <span className="text-gray-300">{email || 'Unknown'}</span></div>
                     <div className="text-lg mt-2">Role: <span className="text-gray-300">{role || localStorage.getItem('role') || 'USER'}</span></div>
                 </div>

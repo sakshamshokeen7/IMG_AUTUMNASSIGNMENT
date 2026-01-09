@@ -22,7 +22,7 @@ export const verifyOtp = async (data: { email: string; otp: string }) => {
 
 export const loginUser = async (data: { email: string; password: string }) => {
   const res = await API.post("/accounts/login/", data);
-  return res.data; // contains access/refresh
+  return res.data;
 };
 
 export const refreshToken = async () => {

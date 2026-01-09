@@ -5,27 +5,32 @@ from django.utils.crypto import get_random_string
 from .models import User, EmailOtp as EmailOTP
 
 class RegisterSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
+    full_name = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ["email", "password", "first_name", "last_name"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = [
+            "email",
+            "password",
+            "full_name", 
+        ]
+        extra_kwargs = {
+            "password": {"write_only": True}
+        }
 
     def create(self, validated_data):
+        full_name = validated_data.pop("full_name", "").strip()
+
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
-            first_name=validated_data.pop("first_name"),
-            last_name=validated_data.pop("last_name"),
+            full_name=full_name,
             is_verified=False
         )
 
-        # Generate & store otp
         otp = get_random_string(6, "0123456789")
         EmailOTP.objects.create(user=user, otp=otp)
-        print("OTP:", otp)  # Later send via email
+        print("OTP:", otp) 
 
         return user
 

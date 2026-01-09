@@ -77,15 +77,20 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
     }
   };
 
-  const tagPerson = async () => {
-    if (!tagUser.trim()) return;
-    try {
-      await axios.post(`/photos/${photoId}/tag/`, { tagged_user: tagUser });
-      setTagUser("");
-    } catch (e) {
-      console.error(e);
-    }
-  };
+ const tagPerson = async () => {
+  if (!tagUser.trim()) return;
+  try {
+    await axios.post(`/photos/${photoId}/tag/`, {
+      tagged_user: tagUser.trim(),
+    });
+    setTagUser("");
+    fetchDetail(); 
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+
 
   const downloadOriginal = async () => {
     try {
@@ -155,7 +160,7 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
             <div className="mb-4">
               <div className="font-medium mb-2">Tag someone</div>
               <div className="flex gap-2">
-                <input value={tagUser} onChange={(e)=>setTagUser(e.target.value)} placeholder="username or id" className="flex-1 p-2 bg-gray-800 rounded" />
+                <input value={tagUser} onChange={(e)=>setTagUser(e.target.value)} placeholder="enter email address " className="flex-1 p-2 bg-gray-800 rounded" />
                 <button onClick={tagPerson} className="px-3 py-2 bg-black-600 rounded">Tag</button>
               </div>
             </div>
@@ -176,6 +181,22 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
                 <button onClick={addComment} className="px-3 py-2 bg-black-600 rounded">Send</button>
               </div>
             </div>
+            {detail?.person_tags?.length > 0 && (
+  <div className="mb-4">
+    <div className="font-medium mb-1">Tagged</div>
+    <div className="flex flex-wrap gap-2">
+      {detail.person_tags.map((t: any) => (
+        <span
+          key={t.id}
+          className="px-2 py-1 text-sm bg-gray-800 rounded"
+        >
+          @{t.tagged_user_name}
+        </span>
+      ))}
+    </div>
+  </div>
+)}
+
           </div>
         </div>
       </div>

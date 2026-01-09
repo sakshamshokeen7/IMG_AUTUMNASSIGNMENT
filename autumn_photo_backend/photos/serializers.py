@@ -19,11 +19,26 @@ class PhotoFavouriteSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class PersonTagSerializer(serializers.ModelSerializer):
-    tagged_user_name = serializers.CharField(source="tagged_user.username", read_only=True)
+    tagged_user_name = serializers.SerializerMethodField()
 
     class Meta:
         model = PersonTag
-        fields = ["id", "tagged_user", "tagged_user_name", "face_box", "created_at"]
+        fields = [
+            "id",
+            "tagged_user",
+            "tagged_user_name",
+            "face_box",
+            "created_at",
+        ]
+        extra_kwargs = {
+            "face_box": {"required": False, "allow_null": True},
+        }
+
+    def get_tagged_user_name(self, obj):
+        user = obj.tagged_user
+        return user.full_name or user.email.split("@")[0]
+
+
 
 class PhotoCommentSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source="user.username", read_only=True)
@@ -76,6 +91,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     comments_count = serializers.IntegerField(read_only=True)
     favourites_count = serializers.IntegerField(read_only=True)
     uploader_name = serializers.CharField(source="uploader.username", read_only=True)
+    person_tags = PersonTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Photo
@@ -90,6 +106,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
             "view_count",
             "created_at",
             "event",
+            "person_tags",
         ]
 
 class MultiplePhotoUploadSerializer(serializers.Serializer):

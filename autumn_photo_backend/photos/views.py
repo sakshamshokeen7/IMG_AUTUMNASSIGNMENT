@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,7 +7,7 @@ from django.db.models import Count
 
 from .models import Photo, photo_like, photo_favourite, PersonTag, PhotoComment
 from events.models import Event
-from notifications.tasks import create_notification
+from notifications.tasks import send_notification as create_notification
 
 from .serializers import (
     PhotoSerializer,
@@ -20,6 +21,10 @@ from .serializers import (
 
 from .utils import generate_thumbnail, generate_display, extract_exif
 
+
+# =========================
+# PHOTO UPLOAD
+# =========================
 class PhotoUploadAPIView(generics.CreateAPIView):
     queryset = Photo.objects.all()
     serializer_class = PhotoSerializer
@@ -28,6 +33,10 @@ class PhotoUploadAPIView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(uploader=self.request.user)
 
+
+# =========================
+# EVENT PHOTOS
+# =========================
 class EventPhotoListAPIView(APIView):
     def get(self, request, event_id):
         sort = request.GET.get("sort", "latest")
@@ -46,13 +55,20 @@ class EventPhotoListAPIView(APIView):
         else:
             photos = photos.order_by("-created_at")
 
-        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
-        return Response({
-    "event": Event.name,
-    "total_photos": photos.count(),
-    "photos": serializer.data
-})
+        serializer = EventPhotoSerializer(
+            photos, many=True, context={"request": request}
+        )
 
+        return Response({
+            "event": event_id,
+            "total_photos": photos.count(),
+            "photos": serializer.data
+        })
+
+
+# =========================
+# PHOTO DETAIL
+# =========================
 class PhotoDetailAPIView(APIView):
     def get(self, request, photo_id):
         photo = (
@@ -76,18 +92,17 @@ class PhotoDetailAPIView(APIView):
         if not photo:
             return Response({"error": "Photo not found"}, status=404)
 
-        # allow uploader or staff to delete
-        user = request.user
-        if not user.is_authenticated:
-            return Response({"error": "Authentication required"}, status=401)
-
-        if photo.uploader != user and not user.is_staff:
+        if photo.uploader != request.user and not request.user.is_staff:
             return Response({"error": "Not authorized"}, status=403)
 
         photo.is_deleted = True
         photo.save()
         return Response({"message": "Photo deleted"})
 
+
+# =========================
+# LIKE PHOTO
+# =========================
 class ToggleLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -105,17 +120,22 @@ class ToggleLikeAPIView(APIView):
             like.delete()
             return Response({"liked": False})
 
+        # 🔔 SEND NOTIFICATION
         if photo.uploader and photo.uploader != request.user:
             create_notification.delay({
-                "recipient": photo.uploader,
-                "actor": request.user,
+                "recipient_id": photo.uploader.id,
+                "actor_id": request.user.id,
                 "notification_type": "like",
                 "message": f"{request.user.email} liked your photo",
-                "photo": photo
+                "photo_id": photo.id
             })
 
         return Response({"liked": True})
 
+
+# =========================
+# FAVOURITE PHOTO
+# =========================
 class ToggleFavouriteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -135,71 +155,81 @@ class ToggleFavouriteAPIView(APIView):
 
         return Response({"favourited": True})
 
+
+# =========================
+# TAG PERSON
+# =========================
 class TagPersonAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, photo_id):
-        # Accept either numeric user id or username/email string as `tagged_user`.
         data = request.data.copy()
         tagged = data.get("tagged_user")
-        if tagged and not str(tagged).isdigit():
-            # try resolving by username or email
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            try:
-                user = User.objects.filter(username=tagged).first() or User.objects.filter(email=tagged).first()
-                if user:
-                    data["tagged_user"] = user.id
-            except Exception:
-                pass
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        if not tagged:
+            return Response({"error": "tagged_user is required"}, status=400)
+
+        if str(tagged).isdigit():
+            user = User.objects.filter(id=tagged).first()
+        else:
+            user = User.objects.filter(email__iexact=tagged).first()
+
+        if not user:
+            return Response({"error": "User not found"}, status=404)
+
+        data["tagged_user"] = user.id
 
         serializer = PersonTagSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-            tag = serializer.save(
-                photo_id=photo_id,
-                created_by=request.user
-            )
+        tag = serializer.save(
+            photo_id=photo_id,
+            created_by=request.user
+        )
 
-            if tag.tagged_user != request.user:
-                create_notification.delay({
-                    "recipient": tag.tagged_user,
-                    "actor": request.user,
-                    "notification_type": "tag",
-                    "message": f"{request.user.email} tagged you in a photo",
-                    "photo_id": photo_id
-                })
+        if tag.tagged_user != request.user:
+            create_notification.delay({
+                "recipient_id": tag.tagged_user.id,
+                "actor_id": request.user.id,
+                "notification_type": "tag",
+                "message": f"{request.user.email} tagged you in a photo",
+                "photo_id": photo_id
+            })
 
-            return Response({"message": "User tagged"})
+        return Response({"message": "User tagged"})
 
-        return Response(serializer.errors, status=400)
 
+# =========================
+# COMMENTS
+# =========================
 class CommentCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, photo_id):
         serializer = AddCommentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-            comment = PhotoComment.objects.create(
-                user=request.user,
-                photo_id=photo_id,
-                text=serializer.validated_data["text"],
-            )
+        comment = PhotoComment.objects.create(
+            user=request.user,
+            photo_id=photo_id,
+            text=serializer.validated_data["text"],
+        )
 
-            photo = comment.photo
-            if photo.uploader and photo.uploader != request.user:
-                create_notification.delay({
-                    "recipient": photo.uploader,
-                    "actor": request.user,
-                    "notification_type": "comment",
-                    "message": f"{request.user.email} commented on your photo",
-                    "photo": photo
-                })
+        photo = comment.photo
+        if photo.uploader and photo.uploader != request.user:
+            create_notification.delay({
+                "recipient_id": photo.uploader.id,
+                "actor_id": request.user.id,
+                "notification_type": "comment",
+                "message": f"{request.user.email} commented on your photo",
+                "photo_id": photo.id
+            })
 
-            return Response({"message": "Comment added"})
+        return Response({"message": "Comment added"})
 
-        return Response(serializer.errors, status=400)
 
 class CommentListAPIView(generics.ListAPIView):
     serializer_class = PhotoCommentSerializer
@@ -209,38 +239,35 @@ class CommentListAPIView(generics.ListAPIView):
             photo_id=self.kwargs["photo_id"]
         ).order_by("-created_at")
 
+
+# =========================
+# MULTIPLE UPLOAD
+# =========================
 class MultiplePhotoUploadAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = MultiplePhotoUploadSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         event_id = serializer.validated_data["event_id"]
         files = serializer.validated_data["files"]
 
-        try:
-            event = Event.objects.get(id=event_id)
-        except Event.DoesNotExist:
-            return Response({"error": "Invalid event_id"}, status=404)
-
-        uploaded = []
+        event = get_object_or_404(Event, id=event_id)
 
         from .tasks import process_photo
 
+        uploaded = []
+
         for file in files:
-            # create placeholder Photo, save original_file to storage
             photo = Photo.objects.create(
                 event=event,
                 uploader=request.user,
-                processing_status='pending',
+                processing_status="pending",
             )
             photo.original_file.save(file.name, file)
             photo.save()
 
-            # enqueue background processing
             process_photo.delay(photo.id)
 
             uploaded.append({
@@ -254,53 +281,50 @@ class MultiplePhotoUploadAPIView(APIView):
             "message": "Files accepted and processing in background"
         })
 
+
+# =========================
+# MY PHOTOS
+# =========================
 class MyLikedPhotosAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        photos = (
-            Photo.objects.filter(is_deleted=False, likes__user=request.user)
-            .annotate(
-                likes_count=Count("likes"),
-                comments_count=Count("comments"),
-                favourites_count=Count("favourites"),
-            )
-            .order_by("-created_at")
-            .distinct()
+        photos = Photo.objects.filter(
+            is_deleted=False,
+            likes__user=request.user
+        ).distinct()
+
+        serializer = EventPhotoSerializer(
+            photos, many=True, context={"request": request}
         )
-        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
         return Response({"photos": serializer.data})
+
 
 class MyFavouritedPhotosAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        photos = (
-            Photo.objects.filter(is_deleted=False, favourites__user=request.user)
-            .annotate(
-                likes_count=Count("likes"),
-                comments_count=Count("comments"),
-                favourites_count=Count("favourites"),
-            )
-            .order_by("-created_at")
-            .distinct()
+        photos = Photo.objects.filter(
+            is_deleted=False,
+            favourites__user=request.user
+        ).distinct()
+
+        serializer = EventPhotoSerializer(
+            photos, many=True, context={"request": request}
         )
-        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
         return Response({"photos": serializer.data})
+
 
 class MyTaggedPhotosAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        photos = (
-            Photo.objects.filter(is_deleted=False, person_tags__tagged_user=request.user)
-            .annotate(
-                likes_count=Count("likes"),
-                comments_count=Count("comments"),
-                favourites_count=Count("favourites"),
-            )
-            .order_by("-created_at")
-            .distinct()
+        photos = Photo.objects.filter(
+            is_deleted=False,
+            person_tags__tagged_user=request.user
+        ).distinct()
+
+        serializer = EventPhotoSerializer(
+            photos, many=True, context={"request": request}
         )
-        serializer = EventPhotoSerializer(photos, many=True, context={"request": request})
         return Response({"photos": serializer.data})

@@ -97,20 +97,11 @@ class ProfileAPIView(APIView):
 
     def get(self, request):
         user = request.user
-        # derive a username: prefer full_name, fallback to email local-part
-        full_name = getattr(user, "full_name", "") or ""
-        if full_name:
-            username = full_name
-        else:
-            username = user.email.split("@")[0] if user.email else ""
-
-        # expose role information so frontend can determine admin access
         role = "ADMIN" if getattr(user, "is_superuser", False) else getattr(user, "role", "PUBLIC")
 
         return Response({
             "email": user.email,
-            "full_name": full_name,
-            "username": username,
+            "full_name": user.full_name,
             "role": role,
             "is_superuser": getattr(user, "is_superuser", False),
         })

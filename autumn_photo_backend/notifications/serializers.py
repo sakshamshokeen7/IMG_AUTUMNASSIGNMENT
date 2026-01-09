@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Notification
 
 class NotificationSerializer(serializers.ModelSerializer):
-    actor_name=serializers.CharField(source='actor.username', read_only=True)
+    actor_name=serializers.SerializerMethodField()
 
     class Meta:
         model=Notification
@@ -18,3 +18,6 @@ class NotificationSerializer(serializers.ModelSerializer):
             'photo_id',
             'event_id',
         ]
+        def get_actor_name(self, obj):
+            user = obj.actor
+            return user.full_name or user.email.split("@")[0]

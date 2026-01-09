@@ -18,11 +18,12 @@ export default function RegisterPage() {
     setError("");
 
     try {
-  const names = name.trim().split(" ");
-  const first_name = names[0];
-  const last_name = names.slice(1).join(" ") || "";
+  const res = await registerUser({
+  email,
+  password,
+  full_name: name.trim(), 
+});
 
-  const res = await registerUser({ email, password, first_name, last_name });
 
   alert(res.message);
   navigate("/verify-otp", { state: { email } });

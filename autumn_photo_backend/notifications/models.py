@@ -9,7 +9,7 @@ class Notification(models.Model):
         ('tag', 'Tag'),
         ('upload', 'Upload'),
     ]
-    reciepient = models.ForeignKey(
+    recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
         related_name='notifications'

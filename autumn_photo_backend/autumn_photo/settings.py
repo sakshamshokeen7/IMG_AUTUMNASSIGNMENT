@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'notifications',
     'channels',
     'corsheaders',
+    'rest_framework_simplejwt',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -155,7 +157,7 @@ OMNIPORT_AUTHORIZE_URL = "https://gymkhana.iitb.ac.in/profiles/oauth/authorize/"
 OMNIPORT_TOKEN_URL = "https://gymkhana.iitb.ac.in/profiles/oauth/token/"
 OMNIPORT_USER_INFO_URL = "https://gymkhana.iitb.ac.in/profiles/user/api/user/"
 
-ASGI_APPLICATION = "autumn_photo.asgi.application"
+ASGI_APPLICATION = "autumn_photo_backend.asgi.application"
 
 CHANNEL_LAYERS = {
     "default": {
@@ -170,6 +172,5 @@ CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 
-INSTALLED_APPS += ["django_celery_results"]
 
 CELERY_RESULT_BACKEND = "django-db"
