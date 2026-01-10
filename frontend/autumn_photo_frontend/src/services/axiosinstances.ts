@@ -6,10 +6,13 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (
+  token &&
+  !config.url?.includes("/auth/login") &&
+  !config.url?.includes("/auth/register")
+) {
+  config.headers.Authorization = `Bearer ${token}`;
+}
   return config;
 });
 

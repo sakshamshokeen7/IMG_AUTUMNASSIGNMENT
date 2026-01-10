@@ -1,18 +1,26 @@
 # accounts/jwt_serializers.py
 
 from rest_framework import serializers
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.models import User
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(username=data["email"], password=data["password"])
+        email = data["email"]
+        password = data["password"]
 
-        if not user:
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email or password")
+
+        if not user.check_password(password):
             raise serializers.ValidationError("Invalid email or password")
 
         if not user.is_verified:
@@ -20,13 +28,16 @@ class LoginSerializer(serializers.Serializer):
 
         refresh = RefreshToken.for_user(user)
 
-        # If the user is a Django superuser treat them as ADMIN for frontend role checks
-        role = "ADMIN" if getattr(user, "is_superuser", False) else getattr(user, "role", "PUBLIC")
+        role = (
+            "ADMIN"
+            if getattr(user, "is_superuser", False)
+            else getattr(user, "role", "PUBLIC")
+        )
 
         return {
             "message": "Login successful",
             "email": user.email,
             "role": role,
-            "refresh": str(refresh),            # save in localStorage
-            "access": str(refresh.access_token) # use in headers
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
         }

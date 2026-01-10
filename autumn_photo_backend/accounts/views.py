@@ -7,7 +7,7 @@ from .serializers import RegisterSerializer, VerifyOTPSerializer
 from .jwt_serializers import LoginSerializer      # << important
 from .models import User
 from .omniport import get_omniport_login_url, get_tokens, get_user_info
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 # ---------------- REGISTER -------------------

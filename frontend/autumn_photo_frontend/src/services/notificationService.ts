@@ -1,10 +1,10 @@
 import axios from "./axiosinstances";
 
 export const getNotifications = async () => {
-  const res = await axios.get("/api/notifications/");
+  const res = await axios.get("/notifications/");
   return res.data;
 };
 
 export const markNotificationRead = async (id: number) => {
-  await axios.post(`/api/notifications/${id}/read/`);
+  await axios.post(`/notifications/${id}/read/`);
 };

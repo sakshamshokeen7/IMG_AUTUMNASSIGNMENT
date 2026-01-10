@@ -3,12 +3,13 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import Notification
 
+
 @shared_task
 def send_notification(data):
     notif = Notification.objects.create(
         recipient_id=data["recipient"],
         actor_id=data["actor"],
-        notification_types=data["notification_type"],  # ✅ FIX
+        notification_types=data["notification_type"],
         message=data["message"],
         photo_id=data.get("photo_id"),
     )
@@ -26,7 +27,7 @@ def send_notification(data):
                 "created_at": notif.created_at.isoformat(),
                 "actor_name": (
                     notif.actor.full_name
-                    if hasattr(notif.actor, "full_name") and notif.actor.full_name
+                    if getattr(notif.actor, "full_name", None)
                     else notif.actor.email.split("@")[0]
                 ),
             },
