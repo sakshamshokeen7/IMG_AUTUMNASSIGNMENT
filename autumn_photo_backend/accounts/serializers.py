@@ -3,6 +3,8 @@
 from rest_framework import serializers
 from django.utils.crypto import get_random_string
 from .models import User, EmailOtp as EmailOTP
+from django.core.mail import send_mail
+from django.conf import settings
 
 class RegisterSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(write_only=True, required=False)
@@ -30,7 +32,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         otp = get_random_string(6, "0123456789")
         EmailOTP.objects.create(user=user, otp=otp)
-        print("OTP:", otp) 
+        send_mail(
+            subject="Your OTP for Autumn Photos",
+            message=f"Your verification OTP is {otp}. It expires in 5 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+            )
 
         return user
 

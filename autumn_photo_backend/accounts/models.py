@@ -58,7 +58,7 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False)
     is_omniport_user = models.BooleanField(default=False)
 
-    objects = UserManager()  # <--- IMPORTANT
+    objects = UserManager()
 
     def __str__(self):
         return self.email

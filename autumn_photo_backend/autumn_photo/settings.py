@@ -150,12 +150,13 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-OMNIPORT_CLIENT_ID = "<your-client-id>"
-OMNIPORT_CLIENT_SECRET = "<your-client-secret>"
-OMNIPORT_REDIRECT_URI = "http://localhost:8000/accounts/auth/omniport/callback/"
-OMNIPORT_AUTHORIZE_URL = "https://gymkhana.iitb.ac.in/profiles/oauth/authorize/"
-OMNIPORT_TOKEN_URL = "https://gymkhana.iitb.ac.in/profiles/oauth/token/"
-OMNIPORT_USER_INFO_URL = "https://gymkhana.iitb.ac.in/profiles/user/api/user/"
+OMNIPORT_AUTHORIZE_URL = "https://channeli.in/oauth/authorize/"
+OMNIPORT_TOKEN_URL = "https://channeli.in/oauth/token/"
+OMNIPORT_USER_INFO_URL = "https://channeli.in/open_auth/user_data/"
+OMNIPORT_CLIENT_ID = "uG4cVbTcoMZ45WZEUYUStTHzk5foDmVGKj8ke3iY"
+OMNIPORT_CLIENT_SECRET = "wkjp6fNZbvtZMgaRXheQQw5eDUCf9mOdjRAaNfgkjBTkicpPgnIipLGiGP7uGRRQlbkFTKmRubslaD0jzNSwFMQt2j9yOdR48szGxIwEikJmAEHPGmPDM9atso0SlR6p"
+OMNIPORT_REDIRECT_URI = "http://localhost:8000/api/accounts/omniport/callback/"
+
 
 ASGI_APPLICATION = "autumn_photo_backend.asgi.application"
 
@@ -174,3 +175,13 @@ CELERY_TASK_SERIALIZER = "json"
 
 
 CELERY_RESULT_BACKEND = "django-db"
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "sakshamkumarshokeen7@gmail.com"
+EMAIL_HOST_PASSWORD = "vhqlbkmyzxsbbfoc"
+DEFAULT_FROM_EMAIL = "Autumn Photos <sakshamkumarshokeen7@gmail.com>"
+
+

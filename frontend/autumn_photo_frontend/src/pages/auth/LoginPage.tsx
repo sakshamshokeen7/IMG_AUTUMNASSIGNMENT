@@ -100,6 +100,21 @@ catch (err: any) {
             >
               {loading ? "Signing in..." : <>Sign In <ArrowRight size={18}/></>}
             </button>
+            <div className="mt-4">
+  <a
+    href="http://localhost:8000/api/accounts/omniport/login/"
+    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition"
+  >
+    <img
+      src="/omniport.png"
+      alt="Omniport"
+      className="w-6 h-6"
+    />
+    <span className="font-medium">Continue with Omniport</span>
+  </a>
+</div>
+
+
           </form>
           <p className="text-center text-sm text-gray-600 mt-6">
             Don’t have an account?

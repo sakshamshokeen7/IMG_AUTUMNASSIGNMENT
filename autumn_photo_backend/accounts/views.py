@@ -2,12 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.shortcuts import redirect
+from django.conf import settings
+import requests
 
 from .serializers import RegisterSerializer, VerifyOTPSerializer
 from .jwt_serializers import LoginSerializer      # << important
 from .models import User
 from .omniport import get_omniport_login_url, get_tokens, get_user_info
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.shortcuts import redirect
 
 
 # ---------------- REGISTER -------------------
@@ -55,41 +59,54 @@ class OmniportLoginAPIView(APIView):
         return redirect(get_omniport_login_url())
 
 
-class OmniportCallbackAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
 
+class OmniportCallbackAPIView(APIView):
     def get(self, request):
         code = request.GET.get("code")
         if not code:
-            return Response({"error": "Missing authorization code"}, status=400)
+            return Response({"error": "No code"}, status=400)
 
-        tokens = get_tokens(code)
-        if "access_token" not in tokens:
-            return Response({"error": "Failed to obtain access token"}, status=400)
+        # Exchange code → token
+        token_res = requests.post(OMNIPORT_TOKEN_URL, data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "client_id": settings.OMNIPORT_CLIENT_ID,
+            "client_secret": settings.OMNIPORT_CLIENT_SECRET,
+            "redirect_uri": settings.OMNIPORT_REDIRECT_URI
+        })
 
-        access_token = tokens["access_token"]
-        user_info = get_user_info(access_token)
-        if not user_info:
-            return Response({"error": "Failed to retrieve user profile"}, status=400)
+        tokens = token_res.json()
+        access_token = tokens.get("access_token")
 
-        email = user_info.get("email")
-        first_name = user_info.get("first_name", "")
-        last_name = user_info.get("last_name", "")
+        # Fetch user info
+        user_res = requests.get(
+            OMNIPORT_USER_URL,
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
 
-        user, created = User.objects.get_or_create(
+        data = user_res.json()
+
+        email = data["contact_information"]["email_address"]
+        full_name = data["person"]["full_name"]
+
+        user, _ = User.objects.get_or_create(
             email=email,
             defaults={
-                "first_name": first_name,
-                "last_name": last_name,
+                "full_name": full_name,
                 "is_verified": True,
-                "is_omniport_user": True,
+                "is_omniport_user": True
             }
         )
 
-        return Response({
-            "message": "Omniport login successful",
-            "email": user.email,
-        }, status=200)
+        # Create YOUR JWT
+        refresh = RefreshToken.for_user(user)
+
+        # Redirect to frontend
+        request.session["jwt_access"] = str(refresh.access_token)
+        request.session["jwt_refresh"] = str(refresh)
+
+        return redirect("http://localhost:5173/omniport/callback")
+
 
 
 class ProfileAPIView(APIView):
@@ -104,4 +121,17 @@ class ProfileAPIView(APIView):
             "full_name": user.full_name,
             "role": role,
             "is_superuser": getattr(user, "is_superuser", False),
+        })
+
+class OmniportSessionAPIView(APIView):
+    def get(self, request):
+        access = request.session.get("jwt_access")
+        refresh = request.session.get("jwt_refresh")
+
+        if not access:
+            return Response({"error": "No session"}, status=401)
+
+        return Response({
+            "access": access,
+            "refresh": refresh,
         })
