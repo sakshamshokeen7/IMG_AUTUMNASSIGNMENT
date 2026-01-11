@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../../services/authservice";
 import { loginSuccess } from "../../features/auth/authSlice";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
+import omniportLogo from "./omniport.png"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -106,7 +107,7 @@ catch (err: any) {
     className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition"
   >
     <img
-      src="/omniport.png"
+      src={omniportLogo}
       alt="Omniport"
       className="w-6 h-6"
     />
