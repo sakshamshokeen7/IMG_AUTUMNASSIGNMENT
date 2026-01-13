@@ -30,7 +30,7 @@ export default function MultipleUploadPage() {
     loadEvents();
   }, []);
 
-  /* Drag & Drop */
+ 
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);

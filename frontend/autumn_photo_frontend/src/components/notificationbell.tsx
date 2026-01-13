@@ -18,12 +18,12 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Initial fetch
+ 
   useEffect(() => {
     getNotifications().then(setNotifications);
   }, []);
 
-  // Real-time updates
+  
   useNotificationSocket((data) => {
     setNotifications((prev) => [data, ...prev]);
   });
@@ -39,7 +39,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative">
-      {/* Bell */}
+      
       <button
         onClick={() => setOpen(!open)}
         className="relative text-xl"
@@ -52,7 +52,7 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown */}
+      
       {open && (
         <div className="absolute right-0 mt-3 w-80 bg-slate-900 text-white rounded shadow-xl z-50">
           {notifications.length === 0 && (

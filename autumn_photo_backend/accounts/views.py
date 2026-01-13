@@ -7,7 +7,7 @@ from django.conf import settings
 import requests
 
 from .serializers import RegisterSerializer, VerifyOTPSerializer
-from .jwt_serializers import LoginSerializer      # << important
+from .jwt_serializers import LoginSerializer    
 from .models import User
 from .omniport import get_omniport_login_url, get_tokens, get_user_info
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -15,7 +15,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import redirect
 
 
-# ---------------- REGISTER -------------------
 class RegisterAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -27,7 +26,6 @@ class RegisterAPIView(APIView):
         return Response(serializer.errors, status=400)
 
 
-# ---------------- VERIFY OTP -------------------
 class VerifyOTPAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -39,7 +37,6 @@ class VerifyOTPAPIView(APIView):
         return Response(serializer.errors, status=400)
 
 
-# ---------------- LOGIN (JWT) -------------------
 class LoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -47,12 +44,11 @@ class LoginAPIView(APIView):
         serializer = LoginSerializer(data=request.data, context={"request": request})
         
         if serializer.is_valid():
-            return Response(serializer.validated_data, status=200)  # validated_data contains tokens
+            return Response(serializer.validated_data, status=200) 
         
         return Response(serializer.errors, status=400)
 
 
-# ---------------- OMNIPORT LOGIN -------------------
 class OmniportLoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -69,7 +65,6 @@ class OmniportCallbackAPIView(APIView):
         if not code:
             return Response({"error": "Authorization code missing"}, status=400)
 
-        # 1️⃣ Exchange code → access token
         token_res = requests.post(
             settings.OMNIPORT_TOKEN_URL,
             data={
@@ -87,7 +82,7 @@ class OmniportCallbackAPIView(APIView):
         if not access_token:
             return Response(tokens, status=400)
 
-        # 2️⃣ Fetch user info
+        
         user_res = requests.get(
             settings.OMNIPORT_USER_INFO_URL,
             headers={"Authorization": f"Bearer {access_token}"},
@@ -98,7 +93,7 @@ class OmniportCallbackAPIView(APIView):
         email = data["contact_information"]["email_address"]
         full_name = data["person"]["full_name"]
 
-        # 3️⃣ Create / fetch local user
+        
         user, _ = User.objects.get_or_create(
             email=email,
             defaults={
@@ -108,10 +103,10 @@ class OmniportCallbackAPIView(APIView):
             },
         )
 
-        # 4️⃣ Create JWT
+        
         refresh = RefreshToken.for_user(user)
 
-        # 5️⃣ Store tokens in session (for SPA pickup)
+        
         request.session["jwt_access"] = str(refresh.access_token)
         request.session["jwt_refresh"] = str(refresh)
         request.session["email"] = user.email

@@ -8,7 +8,7 @@ class EventSerializer(serializers.ModelSerializer):
         queryset=User.objects.all()
     )
 
-    # what frontend should use
+    
     cover = serializers.SerializerMethodField()
 
     class Meta:
@@ -23,14 +23,9 @@ class EventSerializer(serializers.ModelSerializer):
             'location',
             'qr_code_url',
             'is_public',
-            'created_at',
-
-            # keep FK for create/update
+            'created_at',            
             'cover_photo',
-
-            # actual image URL
             'cover',
-
             'created_by',
             'coordinators',
         ]
@@ -41,7 +36,7 @@ class EventSerializer(serializers.ModelSerializer):
         if not photo:
             return None
 
-        # IMPORTANT: check file existence safely
+        
         if getattr(photo, 'thumbnail_file', None) and photo.thumbnail_file:
             return photo.thumbnail_file.url
 

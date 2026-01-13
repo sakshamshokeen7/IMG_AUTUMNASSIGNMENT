@@ -60,7 +60,7 @@ class PhotographerUploadsAPIView(APIView):
         data=[
             {
                 'id': p.id,
-                # prefer thumbnail, otherwise fall back to display or original
+                
                 'thumbnail': (
                     (p.thumbnail_file.url if getattr(p, 'thumbnail_file') and getattr(p.thumbnail_file, 'url', None) else None)
                     or (p.display_file.url if getattr(p, 'display_file') and getattr(p.display_file, 'url', None) else None)
