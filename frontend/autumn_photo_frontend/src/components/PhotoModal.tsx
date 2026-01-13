@@ -7,14 +7,25 @@ interface Props {
   photoUrl: string;
   onClose: () => void;
 }
+interface PhotoDetail {
+  id: number;
+  original_file: string;
+  tags: Record<string, number>;
+  likes_count: number;
+  comments_count: number;
+  favourites_count: number;
+  person_tags: any[];
+}
+
 
 const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
-  const [detail, setDetail] = useState<any>(null);
+  const [detail, setDetail] = useState<PhotoDetail | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
   const [favourited, setFavourited] = useState(false);
   const [tagUser, setTagUser] = useState("");
+  
 
   const fetchDetail = async () => {
     try {
@@ -43,6 +54,8 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
   useEffect(() => {
     fetchDetail();
     fetchComments();
+    const t = setInterval(fetchDetail, 3000);
+    return () => clearInterval(t);
   }, [photoId]);
 
   const toggleLike = async () => {
@@ -119,6 +132,8 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
     }
   };
 
+  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="bg-gray-900 text-white rounded-xl max-w-4xl w-full overflow-hidden">
@@ -185,7 +200,7 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
   <div className="mb-4">
     <div className="font-medium mb-1">Tagged</div>
     <div className="flex flex-wrap gap-2">
-      {detail.person_tags.map((t: any) => (
+      {detail?.person_tags.map((t: any) => (
         <span
           key={t.id}
           className="px-2 py-1 text-sm bg-gray-800 rounded"
@@ -196,6 +211,30 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
     </div>
   </div>
 )}
+          {detail?.tags && (
+  <div className="mt-4">
+    <h4 className="text-sm font-semibold text-gray-300 mb-2">
+      AI Tags
+    </h4>
+
+    <div className="flex flex-wrap gap-2">
+      {Object.entries(detail.tags)
+        .filter(([_, score]) => Number(score) > 0.05)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, 8)
+        .map(([tag]) => (
+          <span
+            key={tag}
+            className="px-3 py-1 bg-indigo-600/20 text-indigo-300 rounded-full text-xs"
+          >
+            {tag}
+          </span>
+        ))}
+    </div>
+  </div>
+)}
+
+
 
           </div>
         </div>

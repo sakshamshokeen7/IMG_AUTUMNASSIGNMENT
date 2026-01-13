@@ -146,13 +146,13 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 AUTHENTICATION_BACKENDS = [
-    'accounts.auth_backend.EmailBackend',   # <-- enable login using email
+    'accounts.auth_backend.EmailBackend',   
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-OMNIPORT_AUTHORIZE_URL = "https://channeli.in/oauth/authorize/"
-OMNIPORT_TOKEN_URL = "https://channeli.in/oauth/token/"
-OMNIPORT_USER_INFO_URL = "https://channeli.in/open_auth/user_data/"
+OMNIPORT_AUTHORIZE_URL = "https://channeli.in/oauth2/authorize/autumn_photo"
+OMNIPORT_TOKEN_URL = "https://channeli.in/oauth2/token/"
+OMNIPORT_USER_INFO_URL = "https://channeli.in/open_auth/get_user_data/"
 OMNIPORT_CLIENT_ID = "uG4cVbTcoMZ45WZEUYUStTHzk5foDmVGKj8ke3iY"
 OMNIPORT_CLIENT_SECRET = "wkjp6fNZbvtZMgaRXheQQw5eDUCf9mOdjRAaNfgkjBTkicpPgnIipLGiGP7uGRRQlbkFTKmRubslaD0jzNSwFMQt2j9yOdR48szGxIwEikJmAEHPGmPDM9atso0SlR6p"
 OMNIPORT_REDIRECT_URI = "http://localhost:8000/api/accounts/omniport/callback/"
@@ -182,6 +182,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "sakshamkumarshokeen7@gmail.com"
 EMAIL_HOST_PASSWORD = "vhqlbkmyzxsbbfoc"
-DEFAULT_FROM_EMAIL = "Autumn Photos <sakshamkumarshokeen7@gmail.com>"
+DEFAULT_FROM_EMAIL = "VIORA <sakshamkumarshokeen7@gmail.com>"
 
-
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False  # True in production

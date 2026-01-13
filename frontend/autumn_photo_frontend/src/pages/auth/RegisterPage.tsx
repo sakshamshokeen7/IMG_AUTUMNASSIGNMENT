@@ -132,7 +132,7 @@ finally {
       </div>
       <div className="hidden md:flex w-[45%] items-center justify-center text-white bg-green-600 p-12 relative overflow-hidden">
         <div className="max-w-md p-10">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Join Autumn Gallery</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">Join Viora</h2>
           <p className="text-lg opacity-90">
             Register, upload & relive the best college memories.
           </p>

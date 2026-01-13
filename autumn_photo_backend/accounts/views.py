@@ -1,3 +1,4 @@
+from autumn_photo.settings import OMNIPORT_TOKEN_URL
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -61,27 +62,35 @@ class OmniportLoginAPIView(APIView):
 
 
 class OmniportCallbackAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
         code = request.GET.get("code")
         if not code:
-            return Response({"error": "No code"}, status=400)
+            return Response({"error": "Authorization code missing"}, status=400)
 
-        # Exchange code → token
-        token_res = requests.post(OMNIPORT_TOKEN_URL, data={
-            "grant_type": "authorization_code",
-            "code": code,
-            "client_id": settings.OMNIPORT_CLIENT_ID,
-            "client_secret": settings.OMNIPORT_CLIENT_SECRET,
-            "redirect_uri": settings.OMNIPORT_REDIRECT_URI
-        })
+        # 1️⃣ Exchange code → access token
+        token_res = requests.post(
+            settings.OMNIPORT_TOKEN_URL,
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "client_id": settings.OMNIPORT_CLIENT_ID,
+                "client_secret": settings.OMNIPORT_CLIENT_SECRET,
+                "redirect_uri": settings.OMNIPORT_REDIRECT_URI,
+            },
+        )
 
         tokens = token_res.json()
         access_token = tokens.get("access_token")
 
-        # Fetch user info
+        if not access_token:
+            return Response(tokens, status=400)
+
+        # 2️⃣ Fetch user info
         user_res = requests.get(
-            OMNIPORT_USER_URL,
-            headers={"Authorization": f"Bearer {access_token}"}
+            settings.OMNIPORT_USER_INFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         data = user_res.json()
@@ -89,23 +98,27 @@ class OmniportCallbackAPIView(APIView):
         email = data["contact_information"]["email_address"]
         full_name = data["person"]["full_name"]
 
+        # 3️⃣ Create / fetch local user
         user, _ = User.objects.get_or_create(
             email=email,
             defaults={
                 "full_name": full_name,
                 "is_verified": True,
-                "is_omniport_user": True
-            }
+                "is_omniport_user": True,
+            },
         )
 
-        # Create YOUR JWT
+        # 4️⃣ Create JWT
         refresh = RefreshToken.for_user(user)
 
-        # Redirect to frontend
+        # 5️⃣ Store tokens in session (for SPA pickup)
         request.session["jwt_access"] = str(refresh.access_token)
         request.session["jwt_refresh"] = str(refresh)
+        request.session["email"] = user.email
+        request.session["role"] = user.role
 
         return redirect("http://localhost:5173/omniport/callback")
+
 
 
 
@@ -125,13 +138,13 @@ class ProfileAPIView(APIView):
 
 class OmniportSessionAPIView(APIView):
     def get(self, request):
-        access = request.session.get("jwt_access")
-        refresh = request.session.get("jwt_refresh")
-
-        if not access:
-            return Response({"error": "No session"}, status=401)
+        if "jwt_access" not in request.session:
+            return Response({"error": "No active session"}, status=401)
 
         return Response({
-            "access": access,
-            "refresh": refresh,
+            "access": request.session["jwt_access"],
+            "refresh": request.session["jwt_refresh"],
+            "email": request.session["email"],
+            "role": request.session["role"],
         })
+

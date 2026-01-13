@@ -32,22 +32,23 @@ def generate_display(image):
     img.save(buffer, format="JPEG")
     return ContentFile(buffer.getvalue())
 
-def generate_watermarked_display(image, text="IMG"):
-    img = Image.open(image).convert("RGBA")
+def generate_watermarked_display(image_file):
+    img = Image.open(image_file).convert("RGBA")
+    draw = ImageDraw.Draw(img)
 
-    watermark_layer = Image.new("RGBA", img.size)
-    draw = ImageDraw.Draw(watermark_layer)
-
+    text = "Autumn Photography"
     font = ImageFont.load_default()
-    text_width, text_height = draw.textsize(text, font)
 
-    x = img.size[0] - text_width - 40
-    y = img.size[1] - text_height - 40
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
 
-    draw.text((x, y), text, font=font, fill=(255, 255, 255, 150))
+    x = img.width - text_width - 10
+    y = img.height - text_height - 10
 
-    merged = Image.alpha_composite(img, watermark_layer)
+    draw.text((x, y), text, fill=(255, 255, 255, 128), font=font)
 
-    buffer = BytesIO()
-    merged.convert("RGB").save(buffer, format="JPEG")
-    return ContentFile(buffer.getvalue())
+    out = BytesIO()
+    img.save(out, format="PNG")
+    out.seek(0)
+    return ContentFile(out.read())

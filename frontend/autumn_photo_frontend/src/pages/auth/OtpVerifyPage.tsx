@@ -136,7 +136,7 @@ export default function VerifyOtpPage() {
 
       <div className="hidden lg:flex lg:w-[45%] bg-green-600 justify-center items-center text-white p-12 relative overflow-hidden">
         <div className="text-center max-w-lg space-y-6 z-10">
-          <h2 className="text-5xl font-bold">Autumn Photography Hub</h2>
+          <h2 className="text-5xl font-bold">Viora</h2>
           <p className="text-indigo-200 text-lg">Upload, explore and enjoy beautiful campus memories.</p>
         </div>
       </div>

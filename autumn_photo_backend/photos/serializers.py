@@ -84,6 +84,7 @@ class EventPhotoSerializer(serializers.ModelSerializer):
             "favourites_count",
             "created_at",
             "view_count",
+            "tags",
         ]
 
 class PhotoDetailSerializer(serializers.ModelSerializer):
@@ -107,6 +108,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "event",
             "person_tags",
+            "tags",
         ]
 
 class MultiplePhotoUploadSerializer(serializers.Serializer):

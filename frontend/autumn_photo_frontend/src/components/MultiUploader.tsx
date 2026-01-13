@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from "react";
-import Navbar from "../app/Navbar";
 import { getEvents } from "../services/eventservice";
 import photoService from "../services/photoService";
 import { Upload, X, Image, CheckCircle, AlertCircle } from "lucide-react";
@@ -17,7 +16,6 @@ export default function MultipleUploadPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  /* Load events */
   useEffect(() => {
     const loadEvents = async () => {
       try {
@@ -49,7 +47,6 @@ export default function MultipleUploadPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  /* Upload */
   const handleUpload = async () => {
     if (!selectedEvent) {
       setMessage("Please select an event");
@@ -75,6 +72,7 @@ export default function MultipleUploadPage() {
       setUploading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
