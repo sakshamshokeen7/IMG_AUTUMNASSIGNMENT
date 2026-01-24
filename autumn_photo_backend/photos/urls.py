@@ -12,6 +12,7 @@ from .views import (
     MyLikedPhotosAPIView,
     MyFavouritedPhotosAPIView,
     MyTaggedPhotosAPIView,
+    PhotoSearchAPIView,
 )
 
 urlpatterns = [
@@ -27,5 +28,6 @@ urlpatterns = [
     path("my/likes/", MyLikedPhotosAPIView.as_view()),
     path("my/favourites/", MyFavouritedPhotosAPIView.as_view()),
     path("my/tagged/", MyTaggedPhotosAPIView.as_view()),
+    path("search/", PhotoSearchAPIView.as_view()),
 
 ]

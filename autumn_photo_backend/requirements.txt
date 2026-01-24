@@ -1,0 +1,11 @@
+Django==6.0
+djangorestframework
+djangorestframework-simplejwt
+channels
+channels-redis
+redis
+celery
+django-celery-results
+Pillow
+requests
+django-cors-headers

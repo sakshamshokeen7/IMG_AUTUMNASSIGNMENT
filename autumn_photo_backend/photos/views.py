@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from .models import Photo, photo_like, photo_favourite, PersonTag, PhotoComment
 from events.models import Event
@@ -275,4 +275,60 @@ class MyTaggedPhotosAPIView(APIView):
         serializer = EventPhotoSerializer(
             photos, many=True, context={"request": request}
         )
+        return Response({"photos": serializer.data})
+
+
+class PhotoSearchAPIView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip().lower()
+        if not query or len(query) < 2:
+            return Response({"photos": []})
+
+        # First get photos by person tags or event
+        photos_qs = (
+            Photo.objects.filter(is_deleted=False)
+            .filter(
+                Q(person_tags__tagged_user__email__icontains=query)
+                | Q(person_tags__tagged_user__full_name__icontains=query)
+                | Q(event__name__icontains=query)
+                | Q(event__description__icontains=query)
+            )
+            .annotate(
+                likes_count=Count("likes", distinct=True),
+                comments_count=Count("comments", distinct=True),
+                favourites_count=Count("favourites", distinct=True),
+            )
+            .distinct()
+        )
+
+        photo_ids = set(photos_qs.values_list('id', flat=True))
+
+        # Also search in AI tags (JSONField)
+        all_photos = Photo.objects.filter(is_deleted=False).exclude(id__in=photo_ids)
+        for photo in all_photos:
+            # Check if query matches in the tags JSON
+            if photo.tags:
+                # Convert entire tags dict/list to lowercase string and search
+                tags_str = str(photo.tags).lower()
+                # Remove quotes, brackets, and curly braces for better matching
+                tags_str = tags_str.replace("'", "").replace('"', '').replace('{', '').replace('}', '').replace('[', '').replace(']', '')
+                
+                # Check if query appears in the cleaned tags string
+                if query in tags_str:
+                    photo_ids.add(photo.id)
+
+        # Get final queryset with all matching photos
+        final_photos = (
+            Photo.objects.filter(id__in=photo_ids, is_deleted=False)
+            .annotate(
+                likes_count=Count("likes", distinct=True),
+                comments_count=Count("comments", distinct=True),
+                favourites_count=Count("favourites", distinct=True),
+            )
+            .order_by("-created_at")
+        )
+
+        serializer = EventPhotoSerializer(final_photos, many=True, context={"request": request})
         return Response({"photos": serializer.data})

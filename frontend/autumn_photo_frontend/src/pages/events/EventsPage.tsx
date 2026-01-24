@@ -27,6 +27,8 @@ export default function EventsPage() {
   const [view, setView] = useState("grid");
   const [openPhotoId, setOpenPhotoId] = useState<number | null>(null);
   const [openPhotoUrl, setOpenPhotoUrl] = useState<string>("");
+  const [searchMode, setSearchMode] = useState<"events" | "photos">("events");
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   const fetchEvents = async (query = "") => {
@@ -48,6 +50,37 @@ export default function EventsPage() {
     setPhotos([]);
   }
 };
+
+  const handleSearch = async (query = "") => {
+    if (!query.trim()) {
+      fetchEvents();
+      setSearchMode("events");
+      setSearchQuery("");
+      return;
+    }
+
+    try {
+      // Search for photos by AI tags, tagged users, or event info
+      const photosRes = await axios.get(`/photos/search/?q=${encodeURIComponent(query)}`);
+      const foundPhotos = photosRes.data.photos || [];
+
+      if (foundPhotos.length > 0) {
+        // Show photo results
+        setPhotos(foundPhotos);
+        setSelectedEvent(null);
+        setSearchMode("photos");
+        setSearchQuery(query);
+      } else {
+        // Fall back to event search
+        const eventsRes = await axios.get(`/events/?search=${encodeURIComponent(query)}`);
+        setEvents(eventsRes.data || []);
+        setSearchMode("events");
+        setSearchQuery("");
+      }
+    } catch (e) {
+      console.error("Search failed", e);
+    }
+  };
 
 
 
@@ -83,22 +116,22 @@ export default function EventsPage() {
               <Search className="w-5 h-5" />
             </div>
             <input
-              onKeyDown={(e) => e.key === "Enter" && fetchEvents(search)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch(search)}
               type="text"
-              placeholder="Search events by name..."
+              placeholder="Search events, photos, tags, or people..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-32 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-transparent backdrop-blur-sm transition-all duration-200"
             />
             <button
-              onClick={() => fetchEvents(search)}
+              onClick={() => handleSearch(search)}
               className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 rounded-lg bg-green-600 transition-all duration-200 font-semibold shadow-lg"
             >
               Search
             </button>
           </div>
         </div>
-        {!selectedEvent && (
+        {!selectedEvent && searchMode === "events" && (
           <div>
             {events.length > 0 ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -158,7 +191,7 @@ export default function EventsPage() {
         )}
 
        
-        {selectedEvent && (
+        {(selectedEvent || searchMode === "photos") && (
           <div className="animate-fadeIn">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
               <div>
@@ -167,13 +200,17 @@ export default function EventsPage() {
                   onClick={() => {
                     setSelectedEvent(null);
                     setPhotos([]);
+                    setSearchMode("events");
+                    setSearchQuery("");
+                    setSearch("");
+                    fetchEvents();
                   }}
                 >
                   <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                   <span className="font-medium">Back to events</span>
                 </button>
                 <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  {selectedEvent.name}
+                  {selectedEvent ? selectedEvent.name : `Search Results: "${searchQuery}"`}
                 </h2>
                 <p className="text-gray-400 mt-2">{photos.length} photos available</p>
               </div>
