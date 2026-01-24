@@ -66,7 +66,6 @@ class OmniportCallbackAPIView(APIView):
             return Response({"error": "Authorization code missing"}, status=400)
 
         try:
-            # Exchange authorization code for access token using Basic Auth
             from requests.auth import HTTPBasicAuth
             import logging
             logger = logging.getLogger(__name__)
@@ -83,17 +82,13 @@ class OmniportCallbackAPIView(APIView):
                     "Content-Type": "application/x-www-form-urlencoded",
                 }
             )
-
-            # Log the response for debugging
             logger.error(f"Token exchange status: {token_res.status_code}")
             logger.error(f"Token exchange response: {token_res.text[:500]}")
-
-            # Check if response is successful
             if token_res.status_code != 200:
                 return Response({
                     "error": "Token exchange failed",
                     "status": token_res.status_code,
-                    "response": token_res.text[:1000]  # Limit response size
+                    "response": token_res.text[:1000]  
                 }, status=400)
 
             tokens = token_res.json()
@@ -102,7 +97,7 @@ class OmniportCallbackAPIView(APIView):
             if not access_token:
                 return Response({"error": "No access token received", "data": tokens}, status=400)
 
-            # Get user info from Channeli
+            
             user_res = requests.get(
                 settings.OMNIPORT_USER_INFO_URL,
                 headers={"Authorization": f"Bearer {access_token}"},
@@ -117,7 +112,7 @@ class OmniportCallbackAPIView(APIView):
 
             data = user_res.json()
 
-            # Extract user data (note: Omniport uses camelCase)
+            
             contact_info = data.get("contactInformation", {})
             email = contact_info.get("instituteWebmailAddress") or contact_info.get("emailAddress")
             
@@ -127,7 +122,7 @@ class OmniportCallbackAPIView(APIView):
             if not email:
                 return Response({"error": "No email found in user data", "data": data}, status=400)
 
-            # Create or get user
+            
             user, _ = User.objects.get_or_create(
                 email=email,
                 defaults={
@@ -137,10 +132,10 @@ class OmniportCallbackAPIView(APIView):
                 },
             )
 
-            # Generate JWT tokens
+            
             refresh = RefreshToken.for_user(user)
 
-            # Store in session
+            
             request.session["jwt_access"] = str(refresh.access_token)
             request.session["jwt_refresh"] = str(refresh)
             request.session["email"] = user.email

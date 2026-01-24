@@ -2,10 +2,18 @@ from rest_framework import serializers
 from .models import Event
 from accounts.models import User
 
+class CoordinatorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'full_name']
+
 class EventSerializer(serializers.ModelSerializer):
-    coordinators = serializers.PrimaryKeyRelatedField(
+    coordinators = CoordinatorSerializer(many=True, read_only=True)
+    coordinator_ids = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=User.objects.all()
+        queryset=User.objects.all(),
+        source='coordinators',
+        write_only=True
     )
 
     
@@ -28,6 +36,7 @@ class EventSerializer(serializers.ModelSerializer):
             'cover',
             'created_by',
             'coordinators',
+            'coordinator_ids',
         ]
         read_only_fields = ['id', 'created_at', 'created_by']
 

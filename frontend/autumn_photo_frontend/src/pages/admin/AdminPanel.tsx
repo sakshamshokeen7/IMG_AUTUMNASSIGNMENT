@@ -23,6 +23,16 @@ export default function AdminPanel() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editStartDatetime, setEditStartDatetime] = useState("");
+  const [editEndDatetime, setEditEndDatetime] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editCover, setEditCover] = useState<File | null>(null);
+  const [editCoordinators, setEditCoordinators] = useState<number[]>([]);
 
   const ROLE_OPTIONS = [
     "ADMIN",
@@ -139,6 +149,51 @@ export default function AdminPanel() {
     }
   };
 
+  const openEditModal = (event: any) => {
+    setEditingEvent(event);
+    setEditName(event.name || "");
+    setEditDescription(event.description || "");
+    setEditStartDatetime(event.start_datetime || "");
+    setEditEndDatetime(event.end_datetime || "");
+    setEditLocation(event.location || "");
+    setEditIsPublic(event.is_public !== false);
+    setEditCoordinators(event.coordinators || []);
+    setEditCover(null);
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingEvent(null);
+  };
+
+  const submitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+    
+    setError("");
+    setLoading(true);
+    try {
+      const form = new FormData();
+      form.append("name", editName);
+      form.append("description", editDescription);
+      if (editStartDatetime) form.append("start_datetime", editStartDatetime);
+      if (editEndDatetime) form.append("end_datetime", editEndDatetime);
+      form.append("location", editLocation);
+      form.append("is_public", editIsPublic ? "true" : "false");
+      editCoordinators.forEach(id => form.append("coordinators", String(id)));
+      if (editCover) form.append('cover_upload', editCover);
+      
+      await axios.patch(`/events/${editingEvent.id}/`, form);
+      setLoading(false);
+      closeEditModal();
+      await refreshEvents();
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.response?.data || String(err));
+    }
+  };
+
   return (
     <div className="h-screen w-screen overflow-y-auto bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
       <Navbar />
@@ -184,6 +239,7 @@ export default function AdminPanel() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => navigate(`/events/${ev.id}`)} className="px-3 py-1 bg-indigo-600 rounded text-sm">View</button>
+                    <button onClick={() => openEditModal(ev)} className="px-3 py-1 bg-green-600 rounded text-sm">Edit</button>
                     <button onClick={() => deleteEvent(ev.id)} className="px-3 py-1 bg-red-600 rounded text-sm">Delete</button>
                   </div>
                 </div>
@@ -238,6 +294,86 @@ export default function AdminPanel() {
             <button type="submit" className="px-4 py-2 bg-indigo-600 rounded">{loading? 'Creating...':'Create Event'}</button>
           </div>
         </form>
+
+        {editModalOpen && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+              <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Edit Event</h2>
+                <button onClick={closeEditModal} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+              </div>
+              
+              <form onSubmit={submitEdit} className="p-6 space-y-4">
+                {error && <div className="p-3 rounded bg-red-800 text-red-200">{JSON.stringify(error)}</div>}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <input required value={editName} onChange={e=>setEditName(e.target.value)} className="w-full p-3 rounded bg-gray-800" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea value={editDescription} onChange={e=>setEditDescription(e.target.value)} className="w-full p-3 rounded bg-gray-800 h-24" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Start datetime</label>
+                    <input type="datetime-local" value={editStartDatetime} onChange={e=>setEditStartDatetime(e.target.value)} className="w-full p-2 rounded bg-gray-800" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">End datetime</label>
+                    <input type="datetime-local" value={editEndDatetime} onChange={e=>setEditEndDatetime(e.target.value)} className="w-full p-2 rounded bg-gray-800" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Location</label>
+                  <input value={editLocation} onChange={e=>setEditLocation(e.target.value)} className="w-full p-3 rounded bg-gray-800" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Cover photo</label>
+                  <input type="file" accept="image/*" onChange={e=>setEditCover(e.target.files?.[0] || null)} className="text-gray-300" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Coordinators</label>
+                  <select 
+                    multiple 
+                    value={editCoordinators.map(String)} 
+                    onChange={(e)=>{
+                      const opts = Array.from(e.target.selectedOptions).map(o=>Number(o.value));
+                      setEditCoordinators(opts);
+                    }} 
+                    className="w-full p-3 rounded bg-gray-800"
+                  >
+                    {users.map(u=> (
+                      <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                    ))}
+                  </select>
+                  <div className="text-sm text-gray-400 mt-1">Hold Ctrl/Cmd to multi-select</div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={editIsPublic} onChange={e=>setEditIsPublic(e.target.checked)} /> 
+                    Public
+                  </label>
+                </div>
+                
+                <div className="flex items-center gap-3 pt-4">
+                  <button type="submit" disabled={loading} className="px-6 py-2 bg-green-600 rounded font-semibold">
+                    {loading ? 'Updating...' : 'Update Event'}
+                  </button>
+                  <button type="button" onClick={closeEditModal} className="px-6 py-2 bg-gray-700 rounded font-semibold">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
