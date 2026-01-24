@@ -65,56 +65,93 @@ class OmniportCallbackAPIView(APIView):
         if not code:
             return Response({"error": "Authorization code missing"}, status=400)
 
-        token_res = requests.post(
-            settings.OMNIPORT_TOKEN_URL,
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "client_id": settings.OMNIPORT_CLIENT_ID,
-                "client_secret": settings.OMNIPORT_CLIENT_SECRET,
-                "redirect_uri": settings.OMNIPORT_REDIRECT_URI,
-            },
-        )
+        try:
+            # Exchange authorization code for access token using Basic Auth
+            from requests.auth import HTTPBasicAuth
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            token_res = requests.post(
+                settings.OMNIPORT_TOKEN_URL,
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "redirect_uri": settings.OMNIPORT_REDIRECT_URI,
+                },
+                auth=HTTPBasicAuth(settings.OMNIPORT_CLIENT_ID, settings.OMNIPORT_CLIENT_SECRET),
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                }
+            )
 
-        tokens = token_res.json()
-        access_token = tokens.get("access_token")
+            # Log the response for debugging
+            logger.error(f"Token exchange status: {token_res.status_code}")
+            logger.error(f"Token exchange response: {token_res.text[:500]}")
 
-        if not access_token:
-            return Response(tokens, status=400)
+            # Check if response is successful
+            if token_res.status_code != 200:
+                return Response({
+                    "error": "Token exchange failed",
+                    "status": token_res.status_code,
+                    "response": token_res.text[:1000]  # Limit response size
+                }, status=400)
 
+            tokens = token_res.json()
+            access_token = tokens.get("access_token")
+
+            if not access_token:
+                return Response({"error": "No access token received", "data": tokens}, status=400)
+
+            # Get user info from Channeli
+            user_res = requests.get(
+                settings.OMNIPORT_USER_INFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+
+            if user_res.status_code != 200:
+                return Response({
+                    "error": "Failed to get user info",
+                    "status": user_res.status_code,
+                    "response": user_res.text
+                }, status=400)
+
+            data = user_res.json()
+
+            # Extract user data (note: Omniport uses camelCase)
+            contact_info = data.get("contactInformation", {})
+            email = contact_info.get("instituteWebmailAddress") or contact_info.get("emailAddress")
+            
+            person = data.get("person", {})
+            full_name = person.get("fullName", "")
+
+            if not email:
+                return Response({"error": "No email found in user data", "data": data}, status=400)
+
+            # Create or get user
+            user, _ = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "full_name": full_name,
+                    "is_verified": True,
+                    "is_omniport_user": True,
+                },
+            )
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            # Store in session
+            request.session["jwt_access"] = str(refresh.access_token)
+            request.session["jwt_refresh"] = str(refresh)
+            request.session["email"] = user.email
+            request.session["role"] = user.role
+
+            return redirect("http://localhost:5173/omniport/callback")
         
-        user_res = requests.get(
-            settings.OMNIPORT_USER_INFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-
-        data = user_res.json()
-
-        email = data["contact_information"]["email_address"]
-        full_name = data["person"]["full_name"]
-
-        
-        user, _ = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "full_name": full_name,
-                "is_verified": True,
-                "is_omniport_user": True,
-            },
-        )
-
-        
-        refresh = RefreshToken.for_user(user)
-
-        
-        request.session["jwt_access"] = str(refresh.access_token)
-        request.session["jwt_refresh"] = str(refresh)
-        request.session["email"] = user.email
-        request.session["role"] = user.role
-
-        return redirect("http://localhost:5173/omniport/callback")
-
-
+        except requests.exceptions.RequestException as e:
+            return Response({"error": "Network error", "message": str(e)}, status=500)
+        except Exception as e:
+            return Response({"error": "Unexpected error", "message": str(e)}, status=500)
 
 
 class ProfileAPIView(APIView):
@@ -131,7 +168,10 @@ class ProfileAPIView(APIView):
             "is_superuser": getattr(user, "is_superuser", False),
         })
 
+
 class OmniportSessionAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         if "jwt_access" not in request.session:
             return Response({"error": "No active session"}, status=401)

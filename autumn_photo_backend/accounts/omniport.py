@@ -3,12 +3,13 @@ from django.conf import settings
 
 
 def get_omniport_login_url():
-    return (
-        f"{settings.OMNIPORT_AUTHORIZE_URL}"
-        f"?client_id={settings.OMNIPORT_CLIENT_ID}"
-        f"&redirect_uri={settings.OMNIPORT_REDIRECT_URI}"
-        f"&response_type=code"
-    )
+    from urllib.parse import urlencode
+    params = {
+        "client_id": settings.OMNIPORT_CLIENT_ID,
+        "redirect_uri": settings.OMNIPORT_REDIRECT_URI,
+        "response_type": "code",
+    }
+    return f"{settings.OMNIPORT_AUTHORIZE_URL}?{urlencode(params)}"
 
 
 def get_tokens(code):

@@ -61,6 +61,11 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 ROOT_URLCONF = 'autumn_photo.urls'
 import os
 
@@ -150,8 +155,8 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-OMNIPORT_AUTHORIZE_URL = "https://channeli.in/oauth2/authorize/autumn_photo"
-OMNIPORT_TOKEN_URL = "https://channeli.in/oauth2/token/"
+OMNIPORT_AUTHORIZE_URL = "https://channeli.in/oauth/authorise/"
+OMNIPORT_TOKEN_URL = "https://channeli.in/open_auth/token/"
 OMNIPORT_USER_INFO_URL = "https://channeli.in/open_auth/get_user_data/"
 OMNIPORT_CLIENT_ID = "uG4cVbTcoMZ45WZEUYUStTHzk5foDmVGKj8ke3iY"
 OMNIPORT_CLIENT_SECRET = "wkjp6fNZbvtZMgaRXheQQw5eDUCf9mOdjRAaNfgkjBTkicpPgnIipLGiGP7uGRRQlbkFTKmRubslaD0jzNSwFMQt2j9yOdR48szGxIwEikJmAEHPGmPDM9atso0SlR6p"
@@ -184,5 +189,8 @@ EMAIL_HOST_USER = "sakshamkumarshokeen7@gmail.com"
 EMAIL_HOST_PASSWORD = "vhqlbkmyzxsbbfoc"
 DEFAULT_FROM_EMAIL = "VIORA <sakshamkumarshokeen7@gmail.com>"
 
-SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = False  # True in production
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = False
