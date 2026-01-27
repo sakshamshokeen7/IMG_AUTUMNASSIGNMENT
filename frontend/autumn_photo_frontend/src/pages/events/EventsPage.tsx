@@ -75,18 +75,15 @@ export default function EventsPage() {
     }
 
     try {
-      // Search for photos by AI tags, tagged users, or event info
       const photosRes = await axios.get(`/photos/search/?q=${encodeURIComponent(query)}`);
       const foundPhotos = photosRes.data.photos || [];
 
       if (foundPhotos.length > 0) {
-        // Show photo results
         setPhotos(foundPhotos);
         setSelectedEvent(null);
         setSearchMode("photos");
         setSearchQuery(query);
       } else {
-        // Fall back to event search
         const eventsRes = await axios.get(`/events/?search=${encodeURIComponent(query)}`);
         setEvents(eventsRes.data || []);
         setSearchMode("events");
@@ -104,7 +101,7 @@ export default function EventsPage() {
   }, []);
 
   const openEditModal = (event: Event, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event card click
+    e.stopPropagation(); 
     setEditingEvent(event);
     setEditName(event.name || "");
     setEditDescription(event.description || "");
@@ -149,9 +146,7 @@ export default function EventsPage() {
   };
 
   const canEditEvent = (event: Event) => {
-    // Only show edit button for event coordinators, not admins (admins use admin panel)
     if (role === "EVENT_COORDINATOR" && event.coordinators) {
-      // Check if current user email is in coordinators
       const isCoordinator = event.coordinators.some((c: any) => {
         const coordinatorEmail = typeof c === "object" ? c.email : c;
         return coordinatorEmail === email;
@@ -279,7 +274,7 @@ export default function EventsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
               <div>
                 <button
-                  className="inline-flex items-center gap-2 text-purple-400 hover:text-white-300 transition-colors mb-3 group"
+                  className="inline-flex items-center gap-2 text-blue-400 hover:text-white-300 transition-colors mb-3 group"
                   onClick={() => {
                     setSelectedEvent(null);
                     setPhotos([]);
@@ -302,7 +297,7 @@ export default function EventsPage() {
                   onClick={() => setView("grid")}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                     view === "grid"
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                       : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                   }`}
                 >
@@ -313,7 +308,7 @@ export default function EventsPage() {
                   onClick={() => setView("masonry")}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                     view === "masonry"
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                       : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                   }`}
                 >
@@ -324,7 +319,7 @@ export default function EventsPage() {
                   onClick={() => setView("carousel")}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                     view === "carousel"
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                       : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                   }`}
                 >
@@ -341,7 +336,7 @@ export default function EventsPage() {
                       <div
                         key={p.id}
                         onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
-                        className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer"
+                        className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer"
                       >
                         <img src={getMediaUrl(p.thumbnail_file)}
                           alt="Event photo"
@@ -359,7 +354,7 @@ export default function EventsPage() {
                       <div
                         key={p.id}
                         onClick={() => { setOpenPhotoId(p.id); setOpenPhotoUrl(p.thumbnail_file); }}
-                        className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer mb-6 break-inside-avoid"
+                        className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-600/20 cursor-pointer mb-6 break-inside-avoid"
                       >
                         <img
                           src={getMediaUrl(p.thumbnail_file)}

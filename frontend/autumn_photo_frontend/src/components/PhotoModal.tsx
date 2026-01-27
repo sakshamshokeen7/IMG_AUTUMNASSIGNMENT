@@ -25,6 +25,8 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
   const [liked, setLiked] = useState(false);
   const [favourited, setFavourited] = useState(false);
   const [tagUser, setTagUser] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   
 
   const fetchDetail = async () => {
@@ -107,19 +109,30 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
 
   const downloadOriginal = async () => {
     try {
+      setDownloading(true);
       const norm = (s: string | null | undefined) => {
         if (!s) return s;
         return s.startsWith("http") ? s : `http://127.0.0.1:8000${s}`;
       };
       const url = norm(detail?.original_file || photoUrl);
+      
+      const response = await fetch(url || "");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
       const link = document.createElement("a");
-      link.href = url || "";
-      link.download = `photo_${photoId}`;
+      link.href = blobUrl;
+      link.download = `photo_${photoId}.jpg`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
+     
+      window.URL.revokeObjectURL(blobUrl);
+      setDownloading(false);
     } catch (e) {
       console.error(e);
+      setDownloading(false);
+      alert("Failed to download image");
     }
   };
 
@@ -127,8 +140,11 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
     try {
       const shareUrl = window.location.origin + `/photos/${photoId}`;
       await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       console.error(e);
+      alert("Failed to copy link");
     }
   };
 
@@ -150,25 +166,32 @@ const PhotoModal: React.FC<Props> = ({ photoId, photoUrl, onClose }) => {
           </div>
 
           <div className="w-full md:w-96 p-4 border-l border-gray-800">
-            <div className="flex items-center gap-3 mb-3">
-              <button onClick={toggleLike} className="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button onClick={toggleLike} className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 <Heart className="w-4 h-4" />
-                <span>{detail?.likes_count ?? 0}</span>
+                <span className="text-sm">{detail?.likes_count ?? 0}</span>
               </button>
 
-              <button onClick={toggleFavourite} className="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded">
+              <button onClick={toggleFavourite} className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 <Star className="w-4 h-4" />
-                <span>{detail?.favourites_count ?? 0}</span>
+                <span className="text-sm">{detail?.favourites_count ?? 0}</span>
               </button>
 
-              <button onClick={downloadOriginal} className="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded">
+              <button 
+                onClick={downloadOriginal} 
+                disabled={downloading}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors font-medium"
+              >
                 <Download className="w-4 h-4" />
-                <span>Download</span>
+                <span className="text-sm">{downloading ? "Downloading..." : "Download"}</span>
               </button>
 
-              <button onClick={shareLink} className="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded">
+              <button 
+                onClick={shareLink} 
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors font-medium"
+              >
                 <Share2 className="w-4 h-4" />
-                <span>Share</span>
+                <span className="text-sm">{copied ? "Copied!" : "Share"}</span>
               </button>
             </div>
 
